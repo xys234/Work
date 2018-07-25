@@ -4,9 +4,9 @@
 
 model_parameters = {
 
-    'first_year'                                        : 2018                      ,
-    'current_freeway_vmt'                               : 39000000                  ,
-    'current_arterial_vmt'                              : 45000000                  ,
+    'first_year'                                        :   2018                    ,
+    'current_freeway_vmt'                               :   39000000                ,
+    'current_arterial_vmt'                              :   45000000                ,
 
     'city truck share_vmt'                              :	0.1                     ,
     'growth_rate'                                       :	0.015                   ,
