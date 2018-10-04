@@ -2,5 +2,5 @@
 **/.idea
 **/*.csv
 **/*.zip
-data
 **/data/*.*
+**/*.xlsx
