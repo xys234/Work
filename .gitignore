@@ -7,3 +7,4 @@
 **/*.def
 **/shapefiles/*.*
 **/*.dat
+**/*.pyc
