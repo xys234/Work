@@ -4,3 +4,6 @@
 **/*.zip
 **/data/*.*
 **/*.xlsx
+**/*.def
+**/shapefiles/*.*
+
