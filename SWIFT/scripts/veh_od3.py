@@ -8,7 +8,7 @@ import math
 
 ZONES = 5263
 
-vod_folder = "Q:\\Houston8_DTA_Interim\\INPUTS\\2017\\"
+vod_folder = "L:\\DCS\Projects\\_Legacy\\60563434_SWIFT\\400_Technical\\410 Transportation Modeling\\DATA\\H-GAC\\Trip Tables\\OD\\Y2017_OD_TOD\\"
 
 AM = ["OD AM3HR HBNW Vehicles", "OD AM3HR HBW Vehicles", "OD AM3HR NHB Vehicles", "OD AM3HR Other VEHICLEs"]
 MD = ["OD MD6HR HBNW Vehicles", "OD MD6HR HBW Vehicles", "OD MD6HR NHB Vehicles", "OD MD6HR Other VEHICLEs"]
@@ -880,7 +880,7 @@ def vlist2(T, ST1, ST2, PURP, VOT, VT):
 
 ###
 def origins():
-    inf = r"..\data\origin.dat"
+    inf = r"L:\DCS\Projects\_Legacy\60563434_SWIFT\400_Technical\410 Transportation Modeling\MODEL_RUNS\Houston8_DTA_Interim\_dst\HGAC_16a\origin.dat"
 
     f = open(inf, 'r')
     data = f.readlines()
@@ -926,18 +926,18 @@ if __name__ == '__main__':
     tveh2 = startAM(0)
     print("AM=", tveh2)
 
-    # tveh1 = startNI1(0)
-    # print("NI1=", tveh1)
+    tveh1 = startNI1(0)
+    print("NI1=", tveh1)
 
-    #
-    # tveh3 = startMD(0)
-    # print("MD=", tveh3)
-    #
-    # tveh4 = startPM(0)
-    # print("PM=", tveh4)
-    #
-    # tveh5 = startNI2(0)
-    # print("NI2=", tveh5)
+
+    tveh3 = startMD(0)
+    print("MD=", tveh3)
+
+    tveh4 = startPM(0)
+    print("PM=", tveh4)
+
+    tveh5 = startNI2(0)
+    print("NI2=", tveh5)
 
     del ORIGIN
 
