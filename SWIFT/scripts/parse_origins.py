@@ -14,16 +14,26 @@ Zone ID, # of generation links, Vehicle generation weight switch (0 means equal 
 """
 
 import os
+import log
+
+logger = log.get_logger(__name__)
 
 
 def parse_origins(origin_file, zones=5263):
     """
-
-    :param origin_file:
-    :return: an dict zone -> [(from_node, to_node, weight)]
+    Parse dynus-T origin file to get a dictionary of all origins
+    :param origin_file: full path to the origin file
+    :type  string
+    :return:  zone -> [(from_node, to_node, weight)]
+    :type: dict
     """
 
     origins = {}
+
+    if not os.path.exists(origin_file):
+        logger.error("{0} does not exist".format(origin_file))
+        raise FileNotFoundError("{0} does not exist".format(origin_file))
+
     with open(origin_file, 'r') as dy_origin_file:
         total_num_origins = 0
         pos = 0
@@ -40,7 +50,7 @@ def parse_origins(origin_file, zones=5263):
                     origins[zone] = [(from_node, to_node, weight)]
                 else:
                     origins[zone].append((from_node, to_node, weight))
-    print("Number of Dynus-T Origin Records = {0:d}".format(total_num_origins))
+    logger.info("Number of Dynus-T Origin Records = {0:d}".format(total_num_origins))
     return origins
 
 

@@ -5,62 +5,6 @@ import time
 from parse_origins import parse_origins
 
 
-def get_period_share(period, tod_times, tod_shares):
-    """
-
-    :param period: a list of tuples specifying period start and end times
-    :param tod_times:
-    :param tod_shares:
-    :return:
-    """
-    share = []
-    times = []
-    for p in period:
-        for t, s in zip(tod_times, tod_shares):
-            if p[0] <= t < p[1]:
-                share.append(s)
-                times.append(t)
-    return share, times
-
-
-def bucket_rounding(mat):
-    """
-    bucket rounding and add the difference to the diagonal elements
-    :param mat: an numpy 2d-array
-    :return: an numpy 2d-array of dtype np.uint16
-    """
-
-    assert len(mat.shape) == 2, "Input shape must be 2"
-    rounded = np.zeros_like(mat, dtype=mat.dtype)
-
-    for i in range(mat.shape[0]):
-        residual = 0
-        for j in range(mat.shape[1]):
-            if mat[i, j] != 0:
-                val = np.round(mat[i, j] + residual)
-                residual += mat[i, j] - val
-                rounded[i, j] = val
-
-    total_diff = int(round(rounded.sum() - mat.sum()))
-    diff = np.where(total_diff > 0, -1, 1)
-    indices = np.argsort(np.diagonal(rounded))[::-1].astype(np.int16)[:np.abs(total_diff)]
-    rounded[indices, indices] += diff
-    return rounded.clip(min=0).astype(np.int16)
-
-
-def normal_rounding(mat):
-    """
-    normal rounding and add the difference to the diagonal elements
-    :param mat:
-    :return:
-    """
-
-    rounded = mat.round()
-    total_diff = int(round(rounded.sum() - mat.sum()))
-    diff = np.where(total_diff>0, -1, 1)
-    indices = np.argsort(np.diagonal(rounded))[::-1].astype(np.int16)[:np.abs(total_diff)]
-    rounded[indices, indices] += diff
-    return rounded.clip(min=0).astype(np.int16)
 
 def to_vehicles(matrix, tod_times, tod_shares, vots, period_def, origins, misc=0):
     """
@@ -133,9 +77,20 @@ def to_vehicles(matrix, tod_times, tod_shares, vots, period_def, origins, misc=0
                 vot = vots[key]
                 break
 
-        period_share, period_times = get_period_share(period_def[period], tod_times, tod_shares)
-        od = h5['/matrices/' + tab][:]
 
+        od = h5['/matrices/' + tab][:]
+        # todo: Step 1: round the matrix
+
+        # todo: Step 2: get the departure times
+
+        # todo: Step 3: write the vehicle records
+
+        # s = '%9d%7d%7d%8.1f%6d%6d%6d%6d%6d%6d%8.4f%8.4f%6d%6d%12.8f%8.2f%5d%7.1f%5d%5.1f\n' % (
+        #     vid, anode, bnode, dtime, 3, vtype, 0, 0, 1, 0, 0.2, 0, orig, 0, ipos, vot, 0, 0, purp, 0)
+        # f1.write(s)
+        #
+        # s1 = '%12d%7.2f\n' % (dest, 0)
+        # f1.write(s1)
 
 
 if __name__ == '__main__':
@@ -193,30 +148,4 @@ if __name__ == '__main__':
     #     share = get_period_share(d, tod_times, tod_shares)
     #     print("Period {0} share = {1:.4f}".format(p, share))
 
-    # test bucket rounding
-    np.random.seed(42)
-    m = np.random.random([5237, 5237])
-    # m = np.random.random([1000,1000])
-    # m = np.random.random([3,3])
 
-    time_bucket, time_normal = 0.0, 0.0
-
-    start = time.clock()
-    m_bucket_rounded = bucket_rounding(m)
-    end = time.clock()
-    time_bucket = end - start
-
-    start = time.clock()
-    m_rounded = normal_rounding(m)
-    end = time.clock()
-    time_normal = end - start
-
-    # print(m)
-    # print(m_rounded)
-    print("Input Total = {0:.2f}".format(m.sum()))
-    print("Normal rounding Total = {0:.2f}".format(m_rounded.sum()))
-    print("Bucket rounding Total = {0:.2f}".format(m_bucket_rounded.sum()))
-    print("Max row total difference = {0:.2f}".format(max(np.abs(m.sum(axis=0) - m_rounded.sum(axis=0)))))
-
-    print("Normal rounding Time = {0:.2f}".format(time_normal))
-    print("Bucket rounding Time = {0:.2f}".format(time_bucket))

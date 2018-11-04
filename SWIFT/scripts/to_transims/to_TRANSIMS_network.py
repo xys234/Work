@@ -1,7 +1,7 @@
 import csv
 import os
 import string
-from TRANSIMS_defs import *
+from to_transims.TRANSIMS_defs import *
 
 
 
