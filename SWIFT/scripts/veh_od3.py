@@ -8,7 +8,7 @@ import math
 
 ZONES = 5263
 
-vod_folder = "L:\\DCS\Projects\\_Legacy\\60563434_SWIFT\\400_Technical\\410 Transportation Modeling\\DATA\\H-GAC\\Trip Tables\\OD\\Y2017_OD_TOD\\"
+vod_folder = "L:\\DCS\Projects\\_Legacy\\60563434_SWIFT\\400_Technical\\410 Transportation Modeling\\DATA\\H-GAC\\Trip Tables\\OD\\Y2045_OD_TOD\\"
 
 AM = ["OD AM3HR HBNW Vehicles", "OD AM3HR HBW Vehicles", "OD AM3HR NHB Vehicles", "OD AM3HR Other VEHICLEs"]
 MD = ["OD MD6HR HBNW Vehicles", "OD MD6HR HBW Vehicles", "OD MD6HR NHB Vehicles", "OD MD6HR Other VEHICLEs"]
@@ -41,7 +41,7 @@ VOT = {"hbwi1da": 9.6, "hbwi2da": 15.04, "hbwi3da": 20.48, "hbwi4da": 27.52, "hb
 
 ORIGIN = np.zeros((ZONES + 1, 200, 2), 'i')
 
-YEAR = 2017
+YEAR = 2045
 
 tmp_f1 = "vlist.tmp"
 tmp_f2 = "dtime.tmp"
@@ -285,8 +285,8 @@ def startAM(vid0):
 
     for h in range(6, 9):
 
-        # VLIST=[]
-        # DTIME=[]
+        VLIST=[]
+        DTIME=[]
 
         ff1 = open(tmp_f1, 'w')
         # f2 = open(tmp_f2,'w')
@@ -691,7 +691,8 @@ def output_vehicle(f1, vid0):
     f.close()
 
     for s in VLIST:
-        v = s.split(',')
+        # v = s.split(',')
+        v = s.split()
         DTIME.append(float(v[5]))
 
     # A = np.array(DTIME)
@@ -921,14 +922,20 @@ def origins():
 
 ###
 if __name__ == '__main__':
+
+    import time
+    start_time = time.clock()
+
     origins()
 
-    tveh2 = startAM(0)
-    print("AM=", tveh2)
+    # tveh2 = startAM(0)
+    # print("AM=", tveh2)
 
     tveh1 = startNI1(0)
     print("NI1=", tveh1)
 
+    tveh2 = startAM(0)
+    print("AM=", tveh2)
 
     tveh3 = startMD(0)
     print("MD=", tveh3)
@@ -940,5 +947,9 @@ if __name__ == '__main__':
     print("NI2=", tveh5)
 
     del ORIGIN
+
+    end_time = time.clock()
+
+    print("total running time {0:.4f}".format(end_time-start_time))
 
     ###

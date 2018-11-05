@@ -2,11 +2,12 @@ import os
 import numpy as np
 import h5py
 import time
+from rounding import normal_rounding, bucket_rounding
 from parse_origins import parse_origins
+from dt_generator import DTGenerator
 
 
-
-def to_vehicles(matrix, tod_times, tod_shares, vots, period_def, origins, misc=0):
+def to_vehicles(matrix, vehfile, tod_times, tod_shares, vots, period_def, origins, start_id = 1, misc=0):
     """
     Convert the input matrix to a generator of vehicles
     :param matrix: an omx matrix file for a period-purpose combination
@@ -80,17 +81,38 @@ def to_vehicles(matrix, tod_times, tod_shares, vots, period_def, origins, misc=0
 
         od = h5['/matrices/' + tab][:]
         # todo: Step 1: round the matrix
+        od = normal_rounding(od)
 
         # todo: Step 2: get the departure times
+        total_trips = od.sum()
+        dt_pool = (t for t in DTGenerator.dt(period=period, size=total_trips))
 
         # todo: Step 3: write the vehicle records
+        for i in range(od.shape[0]):
+            for j in range(od.shape[0]):
+                trip = od[i][j]
+                if trip > 0:
+                    gen_link_choice = np.random.choice(len(origins[i+1]))
+                    anode, bnode = origins[i+1][gen_link_choice][0], origins[i+1][gen_link_choice][1]
+                    orig = i + 1
+                    dest = j + 1
+                    ipos = float(np.random.randint(1, 10000)) / 10000
+                    for k in range(trip):
+                        vid = start_id + k + 1
+                        dtime = next(dt_pool)
+                        yield vid, anode, bnode, dtime, 3, vtype, 0, 0, 1, 0, 0.2, 0, orig, 0, ipos, vot, 0, 0, purp, 0, dest, 0
 
-        # s = '%9d%7d%7d%8.1f%6d%6d%6d%6d%6d%6d%8.4f%8.4f%6d%6d%12.8f%8.2f%5d%7.1f%5d%5.1f\n' % (
-        #     vid, anode, bnode, dtime, 3, vtype, 0, 0, 1, 0, 0.2, 0, orig, 0, ipos, vot, 0, 0, purp, 0)
-        # f1.write(s)
+
+
+        # with open(vehfile, mode='w') as f:
+        #     record = '%9d%7d%7d%8.1f%6d%6d%6d%6d%6d%6d%8.4f%8.4f%6d%6d%12.8f%8.2f%5d%7.1f%5d%5.1f\n' % (
+        #         vid, anode, bnode, dtime, 3, vtype, 0, 0, 1, 0, 0.2, 0, orig, 0, ipos, vot, 0, 0, purp, 0)
+        #     f.write(record)
         #
-        # s1 = '%12d%7.2f\n' % (dest, 0)
-        # f1.write(s1)
+        #     record = '%12d%7.2f\n' % (dest, 0)
+        #     f.write(record)
+
+        return total_trips
 
 
 if __name__ == '__main__':
