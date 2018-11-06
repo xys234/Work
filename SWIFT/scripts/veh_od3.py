@@ -49,7 +49,7 @@ tmp_f2 = "dtime.tmp"
 
 ###
 def startNI1(vid0):
-    global VLIST, DTIME, tab
+    global VLIST, DTIME, tab, ff1
 
     # early AM
     VLIST = []
@@ -73,6 +73,7 @@ def startNI1(vid0):
 
         VLIST = []
         DTIME = []
+        ff1 = open(tmp_f1, 'w')
 
         fac = tod_24h[h] / fac_tot
 
@@ -168,7 +169,7 @@ def startNI1(vid0):
 
 ###
 def startNI2(vid0):
-    global VLIST, DTIME, tab
+    global VLIST, DTIME, tab, ff1
 
     PP = OV
 
@@ -186,6 +187,7 @@ def startNI2(vid0):
 
         VLIST = []
         DTIME = []
+        ff1 = open(tmp_f1, 'w')
 
         fac = tod_24h[h] / fac_tot
 
@@ -381,7 +383,7 @@ def startAM(vid0):
 
 
 def startMD(vid0):
-    global VLIST, DTIME, tab
+    global VLIST, DTIME, tab, ff1
 
     PP = MD
 
@@ -400,6 +402,7 @@ def startMD(vid0):
 
         VLIST = []
         DTIME = []
+        ff1 = open(tmp_f1, 'w')
 
         fac = tod_24h[h] / fac_tot
 
@@ -486,12 +489,13 @@ def startMD(vid0):
 
 
 def startPM(vid0):
-    global VLIST, DTIME, tab
+    global VLIST, DTIME, tab, ff1
 
     PP = PM
 
     VLIST = []
     DTIME = []
+    ff1 = open(tmp_f1, 'w')
 
     fac_tot = 0
     for i in range(15, 19):

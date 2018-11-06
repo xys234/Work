@@ -30,7 +30,6 @@ class DTGenerator:
             self._prob_interp = self._prob_interp / sum(self._prob_interp)
         else:
             self._x_interp = self._x
-
         np.random.seed(self._seed)
 
     def _select_range(self, period=None):

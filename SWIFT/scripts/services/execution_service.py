@@ -7,7 +7,7 @@ class Key():
         self.key_type = key_type
         self.value_type = value_type
         self.value = value
-        self.root_keys = {}
+        self.root_key = None
 
 
     def _get_root_key(self, key):
@@ -30,5 +30,10 @@ class Key():
             pass
 
         convertor = float
-        if self.key_type.upper() == sys_defs.KEY_VALUE_TYPES
+        if self.key_type.upper() == sys_defs.KEY_VALUE_TYPES:
+            pass
 
+
+
+if __name__=='__main__':
+    pass

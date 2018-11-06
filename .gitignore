@@ -3,9 +3,11 @@
 **/*.csv
 **/*.zip
 **/data/*.*
+**/data/**/*.*
 **/*.xlsx
 **/*.def
 **/shapefiles/*.*
 **/*.dat
 **/*.pyc
 **/*.tmp
+*.log

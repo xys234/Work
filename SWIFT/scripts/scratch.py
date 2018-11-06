@@ -1,9 +1,10 @@
 import numpy as np
+import textwrap
 
 def dt_gen():
     for i in range(4):
-        yield np.random.choice([2,4,6,7])
-    return 100
+        yield 2,3,4
+
 
 def all_even():
     n = 0
@@ -11,12 +12,17 @@ def all_even():
         yield n
         n += 2
 
+
+def wrap_list(lst, items_per_line=5):
+    lines = []
+    for i in range(0, len(lst), items_per_line):
+        chunk = lst[i:i + items_per_line]
+        line = ", ".join("{!r}".format(x) for x in chunk)
+        lines.append(line)
+    return "" + ",\n ".join(lines) + ""
+
 if __name__ == '__main__':
 
-    d = dt_gen()
-    print(next(d))
-    print(next(d))
-    print(next(d))
-    print(next(d))
-    print(next(d))
-    print(d)
+    nums = list(range(20))
+    # nums_str = ",".join(nums)
+    print(wrap_list(nums))
