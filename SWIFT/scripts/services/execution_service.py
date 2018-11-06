@@ -3,10 +3,10 @@ from services import sys_defs
 
 class Key():
     def __init__(self, key, key_type='required', value_type='float', value=None):
-        self.key = key
-        self.key_type = key_type
-        self.value_type = value_type
-        self.value = value
+        self.key = key.upper()
+        self.key_type = key_type.upper()
+        self.value_type = value_type.upper()
+        self.value = value.upper()
         self.root_keys = {}
 
 
@@ -30,5 +30,6 @@ class Key():
             pass
 
         convertor = float
-        if self.key_type.upper() == sys_defs.KEY_VALUE_TYPES
+        if self.key_type.upper() == sys_defs.KEY_VALUE_TYPES:
+            pass
 
