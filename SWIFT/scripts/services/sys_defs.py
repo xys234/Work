@@ -1,0 +1,21 @@
+
+
+CONTROL_KEY_TYPES = (
+    'REQUIRED',
+    'OPTIONAL'
+)
+
+KEY_VALUE_TYPES = (
+    'INTEGER','INT'
+    'FLOAT','DOUBLE'
+    'BOOLEAN','STRING'
+)
+
+EXECUTION_KEYS = (
+
+        'REPORT_FILE',
+)
+
+
+
+
