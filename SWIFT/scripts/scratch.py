@@ -1,16 +1,25 @@
 import numpy as np
 import textwrap
 
-def dt_gen():
-    for i in range(4):
-        yield 2,3,4
+class Celsius:
+    def __init__(self, temperature = 0):
+        self._temperature = temperature
+        print("created")
 
+    def to_fahrenheit(self):
+        return (self.temperature * 1.8) + 32
 
-def all_even():
-    n = 0
-    while True:
-        yield n
-        n += 2
+    @property
+    def temperature(self):
+        print("Getting value")
+        return self._temperature
+
+    @temperature.setter
+    def temperature(self, value):
+        if value < -273:
+            raise ValueError("Temperature below -273 is not possible")
+        print("Setting value")
+        self._temperature = value
 
 
 def wrap_list(lst, items_per_line=5):
@@ -23,6 +32,6 @@ def wrap_list(lst, items_per_line=5):
 
 if __name__ == '__main__':
 
-    nums = list(range(20))
-    # nums_str = ",".join(nums)
-    print(wrap_list(nums))
+    t1 = Celsius(20)
+    t1.temperature = 40
+    print(t1.temperature)

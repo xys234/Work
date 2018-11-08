@@ -17,6 +17,9 @@ def create_test_data(filename, matrix_name, dims=(10,10)):
 
 
 if __name__ == '__main__':
+
+    np.random.seed(42)
+
     folder = '..\..\data\Dynus_T'
     matrix_test = os.path.join(folder, 'test.omx')
     matrix_name = "amhbwai3a2"
@@ -69,10 +72,9 @@ if __name__ == '__main__':
 
     dynust_folder = '..\..\data\Dynus_T'
     DynusT_origin_file = os.path.join(dynust_folder, 'origin.dat')
-
     origins = parse_origins(DynusT_origin_file)
-    vehicle_file_path = os.path.join(dynust_folder, 'vehicles.dat')
 
+    vehicle_file_path = os.path.join(dynust_folder, 'vehicles.dat')
     vehicle_pool = to_vehicles(matrix_test, dt_generator, vots, period_def, origins)
     write_vehicles(vehicle_file_path, vehicle_pool)
 

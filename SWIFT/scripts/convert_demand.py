@@ -1,12 +1,8 @@
-import os
 import numpy as np
 import h5py
-import time
-from rounding import normal_rounding, bucket_rounding
-from parse_origins import parse_origins
-from dt_generator import DTGenerator
+from rounding import normal_rounding
 
-from log import get_logger
+from services.report_service import get_logger
 
 logger = get_logger('__name__')
 
@@ -43,13 +39,13 @@ def to_vehicles(matrix, dt_generator, vots, period_def, origins):
     vot = 0
     period = 0
 
-    for p in period_def.keys():
-        if matrix.find(p) >= 0:
-            period = p
-            print("Processing period {0}".format(p))
-            break
-
     for tab in tables:
+        for p in period_def.keys():
+            if tab.find(p) >= 0:
+                period = p
+                print("Processing period {0}".format(p))
+                break
+
         if tab.find("da") >= 0:
             vtype = 1
         elif tab.find("s2") >= 0 or tab.find("a2") >= 0:
@@ -88,7 +84,7 @@ def to_vehicles(matrix, dt_generator, vots, period_def, origins):
 
         # todo: Step 2: get the departure times
         total_trips = od.sum()
-        dt_pool = (t for t in dt_generator.dt(period=period, size=total_trips))
+        dt_pool = (t for t in dt_generator.dt(period=period_def[period], size=total_trips))
 
         # todo: Step 3: write the vehicle records
         for i in range(od.shape[0]):
@@ -102,7 +98,7 @@ def to_vehicles(matrix, dt_generator, vots, period_def, origins):
                     ipos = float(np.random.randint(1, 10000)) / 10000
                     for k in range(trip):
                         dtime = next(dt_pool)
-                        yield anode, bnode, dtime, 3, vtype, 0, 0, 1, 0, 0.2, 0, orig, 0, ipos, vot, 0, 0, purp, 0, dest, 0
+                        yield anode, bnode, dtime, muc_class, vtype, 0, 0, 1, 0, 0.2, 0, orig, 0, ipos, vot, 0, 0, purp, 0, dest, 0
 
 
 def write_vehicles(vehicle_file, vehicle_pool, start_id=1):

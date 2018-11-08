@@ -14,9 +14,9 @@ Zone ID, # of generation links, Vehicle generation weight switch (0 means equal 
 """
 
 import os
-import log
+from services import report_service
 
-logger = log.get_logger(__name__)
+logger = report_service.get_logger(__name__)
 
 
 def parse_origins(origin_file, zones=5263):
