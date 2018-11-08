@@ -1,5 +1,6 @@
 
 from services.sys_defs import *
+from collections import namedtuple
 
 class Key():
     def __init__(self, key=None, key_type=None, value=None):
@@ -34,6 +35,14 @@ class Key():
         self._root_key = value
 
     @property
+    def value_type(self):
+        return self._value_type
+
+    @property
+    def value_default(self):
+        return self._value_default
+
+    @property
     def key_group(self):
         return self._key_group
 
@@ -49,11 +58,22 @@ class Key():
     def key_type(self, value):
         self._key_type = value
 
+    def __str__(self):
+        return str(dict(key=self.key, key_type=self._key_type, root_key=self.root_key,
+                        value_type=self._value_type, value=self.value, key_group=self.key_group
+                        )
+                   )
+
+    def to_dict(self):
+        key = namedtuple('key', ('key', 'key_type', 'value_default', 'value_type', 'root_key', 'key_group', 'value'))
+        return {self.key: key(self.key, self.key_type, self.value_default,
+                              self.value_type, self.root_key, self.key_group, self.value)}
+
     def _update_key_value(self):
         converter = int
-        if self.key_type == Key_Value_Types.STRING:
+        if self.value_type == Key_Value_Types.STRING:
             converter = str
-        elif self.key_type == Key_Value_Types.FLOAT:
+        elif self.value_type == Key_Value_Types.FLOAT:
             converter = float
         if self.value:
             self.value = converter(self.value)
@@ -69,20 +89,34 @@ class Key():
         if parts[-1].isdigit():
             self.root_key = self.key[:len(self.key)-len(parts[-1])-1]
             self.key_group = int(parts[-1])
+        else:
+            self.root_key = self.key
 
         if self.root_key in KEY_DB:
-            self._value_type, self._value_default = KEY_DB[self.root_key]
+            self._value_type, self._value_default = KEY_DB[self.root_key].value_type, KEY_DB[self.root_key].value_default
         else:
             self.root_key = None
 
+        if self.value is None:
+            self.value = KEY_DB[self.root_key].value_default          # set to default value
+
         self._update_key_value()
 
+    @classmethod
+    def get_root(cls, keyname):
+        """
+        get the root key name
+        :param keyname:
+        :type  str
+        :return:
+        """
 
-    def __str__(self):
-        return str(dict(key=self.key, key_type=self._key_type, root_key=self.root_key,
-                        value_type=self._value_type, value=self.value, key_group=self.key_group
-                        )
-                   )
+        parts = keyname.split("_")
+        if parts[-1].isdigit():
+            return keyname[:len(keyname) - len(parts[-1]) - 1], int(parts[-1])
+        else:
+            return keyname, 0
+
 
 if __name__=='__main__':
 

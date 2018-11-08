@@ -32,6 +32,9 @@ def wrap_list(lst, items_per_line=5):
 
 if __name__ == '__main__':
 
-    t1 = Celsius(20)
-    t1.temperature = 40
-    print(t1.temperature)
+   import re
+   line = "TITLE\t\t\tConvertTrips"
+   line2 = line.replace("\t", "    ")
+   print(line2)
+   res = re.split(r"[\s]{2,}", line2)
+   print(res)
