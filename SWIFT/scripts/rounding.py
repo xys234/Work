@@ -1,8 +1,8 @@
 
 import numpy as np
-import log
+from services import report_service
 
-logger = log.get_logger(__name__)
+logger = report_service.get_logger(__name__)
 
 
 def bucket_rounding(mat):

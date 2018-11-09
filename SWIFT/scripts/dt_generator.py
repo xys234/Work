@@ -1,8 +1,8 @@
 import numpy as np
 from scipy.interpolate import interp1d
-import log
+from services import report_service
 
-logger = log.get_logger(__name__)
+logger = report_service.get_logger(__name__)
 
 class DTGenerator:
     def __init__(self, x, prob, seed=0, interp=0):
@@ -30,10 +30,15 @@ class DTGenerator:
             self._prob_interp = self._prob_interp / sum(self._prob_interp)
         else:
             self._x_interp = self._x
-
         np.random.seed(self._seed)
 
     def _select_range(self, period=None):
+        """
+
+        :param period: period start and end times
+        :type  list of tuples
+        :return:
+        """
         if period:
             selector = np.array([False]*len(self._x_interp))
             for p in period:

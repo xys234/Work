@@ -1,22 +1,40 @@
 import numpy as np
+import textwrap
 
-def dt_gen():
-    for i in range(4):
-        yield np.random.choice([2,4,6,7])
-    return 100
+class Celsius:
+    def __init__(self, temperature = 0):
+        self._temperature = temperature
+        print("created")
 
-def all_even():
-    n = 0
-    while True:
-        yield n
-        n += 2
+    def to_fahrenheit(self):
+        return (self.temperature * 1.8) + 32
+
+    @property
+    def temperature(self):
+        print("Getting value")
+        return self._temperature
+
+    @temperature.setter
+    def temperature(self, value):
+        if value < -273:
+            raise ValueError("Temperature below -273 is not possible")
+        print("Setting value")
+        self._temperature = value
+
+
+def wrap_list(lst, items_per_line=5):
+    lines = []
+    for i in range(0, len(lst), items_per_line):
+        chunk = lst[i:i + items_per_line]
+        line = ", ".join("{!r}".format(x) for x in chunk)
+        lines.append(line)
+    return "" + ",\n ".join(lines) + ""
 
 if __name__ == '__main__':
 
-    d = dt_gen()
-    print(next(d))
-    print(next(d))
-    print(next(d))
-    print(next(d))
-    print(next(d))
-    print(d)
+   import re
+   line = "TITLE\t\t\tConvertTrips"
+   line2 = line.replace("\t", "    ")
+   print(line2)
+   res = re.split(r"[\s]{2,}", line2)
+   print(res)
