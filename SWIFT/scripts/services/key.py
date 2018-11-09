@@ -5,11 +5,12 @@ from collections import namedtuple
 class Key():
     def __init__(self, key=None, key_type=None, value=None):
         self._key = key
-        self.key_type = key_type
+        self._key_type = key_type
         self._value_default = None
         self._value_type = None
         self._root_key = None
         self._key_group = 0
+        self._key_order = 0
         self.value = value
 
         self._initialize_key()
@@ -51,6 +52,14 @@ class Key():
         self._key_group = value
 
     @property
+    def key_order(self):
+        return self._key_order
+
+    @key_order.setter
+    def key_order(self, value):
+        self._key_order = value
+
+    @property
     def key_type(self):
         return self._key_type
 
@@ -70,12 +79,15 @@ class Key():
                               self.value_type, self.root_key, self.key_group, self.value)}
 
     def _update_key_value(self):
-        converter = int
-        if self.value_type == Key_Value_Types.STRING:
-            converter = str
-        elif self.value_type == Key_Value_Types.FLOAT:
-            converter = float
         if self.value:
+            if self.value_type == Key_Value_Types.STRING:
+                converter = str
+            elif self.value_type == Key_Value_Types.FLOAT:
+                converter = float
+            elif self.value_type == Key_Value_Types.RANGES:
+                converter = parse_time_range
+            else:
+                converter = int
             self.value = converter(self.value)
 
     def _initialize_key(self):
@@ -93,7 +105,8 @@ class Key():
             self.root_key = self.key
 
         if self.root_key in KEY_DB:
-            self._value_type, self._value_default = KEY_DB[self.root_key].value_type, KEY_DB[self.root_key].value_default
+            self._value_type, self._value_default, self.key_order = \
+                KEY_DB[self.root_key].value_type, KEY_DB[self.root_key].value_default, KEY_DB[self.root_key].key_order
         else:
             self.root_key = None
 

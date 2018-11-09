@@ -1,19 +1,8 @@
 
-
-<<<<<<< HEAD
-class Key():
-    def __init__(self, key, key_type='required', value_type='float', value=None):
-        self.key = key.upper()
-        self.key_type = key_type.upper()
-        self.value_type = value_type.upper()
-        self.value = value.upper()
-        self.root_keys = {}
-=======
 import re
 import time
 import os
 import itertools
->>>>>>> 1f093d914530b39f9affe4cdc2c61aa742e66c91
 
 from services.sys_defs import *
 from services.key import Key
@@ -101,7 +90,6 @@ class Execution_Service():
         :return:
         """
         if not os.path.exists(control_file):
-            self.logger.error("Control file %s is not found" % control_file)
             raise FileNotFoundError("Control file %s is not found" % control_file)
 
         with open(control_file, mode='r') as control:
@@ -123,11 +111,11 @@ class Execution_Service():
         Populate all keys and check required key
         :return:
         """
-        # todo: Cascading key values
 
+        single_keys = [k for k in self.acceptable_keys if KEY_DB[k][2] == Key_Group_Types.NOGROUP]
         group_suffixes = ["_"+str(g) for g in range(1, self.highest_group+1)]
         group_keys = [k for k in self.acceptable_keys if KEY_DB[k][2] == Key_Group_Types.GROUP]
-        full_key_list = [k+s for k, s in itertools.product(group_keys, group_suffixes)]
+        full_key_list = single_keys + [k+s for k, s in itertools.product(group_keys, group_suffixes)]
 
         for k in full_key_list:
             if k not in self.keys:
@@ -150,7 +138,7 @@ class Execution_Service():
             for g in group_suffixes:
                 check_key = req_k + g
                 for name, k in self.keys.items():
-                    if check_key == k and k.value is not None:
+                    if check_key == name and k.value is not None:
                         found = True
                         break
 
@@ -159,8 +147,10 @@ class Execution_Service():
             raise ValueError("Required key %s not found" % check_key)
 
     def print_keys(self):
-        for k, v in self.keys.items():
-            self.logger.info("%s = %s" % (k, v.value))
+        keys = [(k, v.value, v.key_order) for k, v in self.keys.items()]
+        keys = sorted(keys, key=lambda k: k[2])
+        for k, v, _ in keys:
+            self.logger.info("%s = %s" % (k, v))
 
     def execute(self, control_file, main=None):
         start_time = time.time()
@@ -179,7 +169,7 @@ if __name__=='__main__':
     import os
 
     program_name = "ConvertTrips"
-    acceptable_keys = ('TITLE', 'REPORT_FILE', 'PROJECT_DIRECTORY')
+    acceptable_keys = ('TITLE', 'REPORT_FILE', 'PROJECT_DIRECTORY', 'VEHICLE_CLASS')
     required_keys = ('TRIP_TABLE_FILE', 'DIURNAL_FILE', 'VALUE_OF_TIME')
     acceptable_keys = acceptable_keys + required_keys
 

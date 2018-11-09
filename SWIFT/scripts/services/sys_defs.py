@@ -37,33 +37,32 @@ class Key_Group_Types(IntEnum):
     GROUP = 1
 
 
-
-Key_Info = namedtuple('Key_Info', ('value_type', 'value_default', 'group_type'))
+Key_Info = namedtuple('Key_Info', ('value_type', 'value_default', 'group_type', 'key_order'))
 KEY_DB = {
         # Key                       # Value_Type                  # Value_Default
-        'TITLE':                    Key_Info(Key_Value_Types.STRING,      None,              Key_Group_Types.NOGROUP),
-        'REPORT_FILE':              Key_Info(Key_Value_Types.STRING,      None,              Key_Group_Types.NOGROUP),
-        'PROJECT_DIRECTORY':        Key_Info(Key_Value_Types.STRING,      None,              Key_Group_Types.NOGROUP),
+        'TITLE':                    Key_Info(Key_Value_Types.STRING,      None,              Key_Group_Types.NOGROUP, 1),
+        'REPORT_FILE':              Key_Info(Key_Value_Types.STRING,      None,              Key_Group_Types.NOGROUP, 2),
+        'PROJECT_DIRECTORY':        Key_Info(Key_Value_Types.STRING,      None,              Key_Group_Types.NOGROUP, 3),
 
-        'TRIP_TABLE_FILE':          Key_Info(Key_Value_Types.STRING,      None,                         Key_Group_Types.GROUP),
-        'MATRIX_NAME':              Key_Info(Key_Value_Types.STRING,      None,                         Key_Group_Types.GROUP),
-        'TIME_PERIOD_RANGE':        Key_Info(Key_Value_Types.RANGES,      "0..24",                      Key_Group_Types.GROUP),
-        'DIURNAL_FILE':             Key_Info(Key_Value_Types.STRING,      None,                         Key_Group_Types.GROUP),
-        'TRIP_PURPOSE_CODE':        Key_Info(Key_Value_Types.INTEGER,     1,                            Key_Group_Types.GROUP),
-        'VALUE_OF_TIME':            Key_Info(Key_Value_Types.FLOAT,       10.0,                         Key_Group_Types.GROUP),
-        'VEHICLE_CLASS':            Key_Info(Key_Value_Types.INTEGER,     Codes_Vehicle_Class.UE,       Key_Group_Types.GROUP),
-        'VEHICLE_TYPE':             Key_Info(Key_Value_Types.INTEGER,     1,                            Key_Group_Types.GROUP),
-        'VEHICLE_OCCUPANCY':        Key_Info(Key_Value_Types.INTEGER,     Codes_Vehicle_Occupancy.SOV,  Key_Group_Types.GROUP),
-        'VEHICLE_GENERATION_MODE':  Key_Info(Key_Value_Types.INTEGER,     1,    Key_Group_Types.GROUP),
-        'INDIFFERENCE_BAND':        Key_Info(Key_Value_Types.FLOAT,       0.0,  Key_Group_Types.GROUP),
-        'NUMBER_OF_STOPS':          Key_Info(Key_Value_Types.INTEGER,     1,    Key_Group_Types.GROUP),
-        'ENROUTE_INFO':             Key_Info(Key_Value_Types.INTEGER,     0,    Key_Group_Types.GROUP),
-        'COMPLIANCE_RATE':          Key_Info(Key_Value_Types.FLOAT,       0.0,  Key_Group_Types.GROUP),
-        'EVACUATION_FLAG':          Key_Info(Key_Value_Types.INTEGER,     0,    Key_Group_Types.GROUP),
-        'ACTIVITY_DURATION':        Key_Info(Key_Value_Types.FLOAT,       0.0,  Key_Group_Types.GROUP),
-        'ARRIVAL_TIME':             Key_Info(Key_Value_Types.FLOAT,       0.0,  Key_Group_Types.GROUP),
-        'WAIT_TIME':                Key_Info(Key_Value_Types.FLOAT,       0.0,  Key_Group_Types.GROUP),
-        'INITIAL_GAS':              Key_Info(Key_Value_Types.FLOAT,       0.0,  Key_Group_Types.GROUP)
+        'TRIP_TABLE_FILE':          Key_Info(Key_Value_Types.STRING,      None,                         Key_Group_Types.GROUP, 10),
+        'MATRIX_NAME':              Key_Info(Key_Value_Types.STRING,      None,                         Key_Group_Types.GROUP, 11),
+        'TIME_PERIOD_RANGE':        Key_Info(Key_Value_Types.RANGES,      "0..24",                      Key_Group_Types.GROUP, 12),
+        'DIURNAL_FILE':             Key_Info(Key_Value_Types.STRING,      None,                         Key_Group_Types.GROUP, 13),
+        'TRIP_PURPOSE_CODE':        Key_Info(Key_Value_Types.INTEGER,     1,                            Key_Group_Types.GROUP, 14),
+        'VALUE_OF_TIME':            Key_Info(Key_Value_Types.FLOAT,       10.0,                         Key_Group_Types.GROUP, 15),
+        'VEHICLE_CLASS':            Key_Info(Key_Value_Types.INTEGER,     Codes_Vehicle_Class.UE,       Key_Group_Types.GROUP, 16),
+        'VEHICLE_TYPE':             Key_Info(Key_Value_Types.INTEGER,     1,                            Key_Group_Types.GROUP, 17),
+        'VEHICLE_OCCUPANCY':        Key_Info(Key_Value_Types.INTEGER,     Codes_Vehicle_Occupancy.SOV,  Key_Group_Types.GROUP, 18),
+        'VEHICLE_GENERATION_MODE':  Key_Info(Key_Value_Types.INTEGER,     1,    Key_Group_Types.GROUP, 19),
+        'INDIFFERENCE_BAND':        Key_Info(Key_Value_Types.FLOAT,       0.0,  Key_Group_Types.GROUP, 20),
+        'NUMBER_OF_STOPS':          Key_Info(Key_Value_Types.INTEGER,     1,    Key_Group_Types.GROUP, 21),
+        'ENROUTE_INFO':             Key_Info(Key_Value_Types.INTEGER,     0,    Key_Group_Types.GROUP, 22),
+        'COMPLIANCE_RATE':          Key_Info(Key_Value_Types.FLOAT,       0.0,  Key_Group_Types.GROUP, 23),
+        'EVACUATION_FLAG':          Key_Info(Key_Value_Types.INTEGER,     0,    Key_Group_Types.GROUP, 24),
+        'ACTIVITY_DURATION':        Key_Info(Key_Value_Types.FLOAT,       0.0,  Key_Group_Types.GROUP, 25),
+        'ARRIVAL_TIME':             Key_Info(Key_Value_Types.FLOAT,       0.0,  Key_Group_Types.GROUP, 26),
+        'WAIT_TIME':                Key_Info(Key_Value_Types.FLOAT,       0.0,  Key_Group_Types.GROUP, 27),
+        'INITIAL_GAS':              Key_Info(Key_Value_Types.FLOAT,       0.0,  Key_Group_Types.GROUP, 28)
 }
 
 
