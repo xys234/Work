@@ -6,22 +6,31 @@ import itertools
 
 from services.sys_defs import *
 from services.key import Key
+from services.data_service import parse_time_range
 from services.report_service import Report_Service
 
 
 class Execution_Service():
 
+    common_keys = (
+        'TITLE', 'REPORT_FILE', 'PROJECT_DIRECTORY', 'RANDOM_SEED'
+    )
+
     def __init__(self, name=None, required_keys=None, acceptable_keys=None):
         self.name = name
         self.keys = {}                                      # a dictionary for all keys {'key_name': key_object}
         self.required_keys = required_keys                  # a tuple for all root-keys required
-        self.acceptable_keys = acceptable_keys              # a tuple for all root-keys acceptable
+        self.acceptable_keys = self.common_keys + acceptable_keys              # a tuple for all root-keys acceptable
+        self.acceptable_keys += self.required_keys
         self.highest_group = 1
 
         self.title = None
         self.report_file = None
         self.project_dir = None
+        self.random_seed = None
         self.logger = None
+
+        self.state = Codes_Execution_Status.OK      # todo: remove all raise errors
 
     @staticmethod
     def is_comment(line):
@@ -81,6 +90,10 @@ class Execution_Service():
         self.report_file = os.path.join(self.project_dir, self.report_file)
         self.keys['REPORT_FILE'].value = self.report_file
 
+        if 'RANDOM_SEED' not in self.keys.keys():
+            self.keys['RANDOM_SEED'] = Key('RANDOM_SEED', key_type=Control_Key_Types.OPTIONAL)
+
+        self.random_seed = self.keys['RANDOM_SEED'].value
         self.logger = Report_Service(self.report_file).get_logger()
 
     def parse_control_file(self, control_file):
@@ -90,7 +103,8 @@ class Execution_Service():
         :return:
         """
         if not os.path.exists(control_file):
-            raise FileNotFoundError("Control file %s is not found" % control_file)
+            print("Control file %s is not found" % control_file)
+            self.state = Codes_Execution_Status.ERROR
 
         with open(control_file, mode='r') as control:
             for line in control:
@@ -105,6 +119,22 @@ class Execution_Service():
                         self.highest_group = key.key_group
                     self.keys.update({key.key: key})
 
+    def update_key_value(self, key):
+        if key.value:
+            if key.value_type == Key_Value_Types.TIME_RANGE:
+                val = parse_time_range(key.value, self.logger)
+                if val[0][0] >= 0:
+                    key.value = val
+                else:
+                    self.state = Codes_Execution_Status.ERROR
+            else:
+                if key.value_type == Key_Value_Types.STRING:
+                    converter = str
+                elif key.value_type == Key_Value_Types.FLOAT:
+                    converter = float
+                else:
+                    converter = int
+                key.value = converter(key.value)
 
     def check_keys(self):
         """
@@ -112,9 +142,9 @@ class Execution_Service():
         :return:
         """
 
-        single_keys = [k for k in self.acceptable_keys if KEY_DB[k][2] == Key_Group_Types.NOGROUP]
+        single_keys = [k for k in self.acceptable_keys if KEY_DB[k].group_type == Key_Group_Types.NOGROUP]
         group_suffixes = ["_"+str(g) for g in range(1, self.highest_group+1)]
-        group_keys = [k for k in self.acceptable_keys if KEY_DB[k][2] == Key_Group_Types.GROUP]
+        group_keys = [k for k in self.acceptable_keys if KEY_DB[k].group_type == Key_Group_Types.GROUP]
         full_key_list = single_keys + [k+s for k, s in itertools.product(group_keys, group_suffixes)]
 
         for k in full_key_list:
@@ -131,20 +161,32 @@ class Execution_Service():
                 new_key = Key(key=k, key_type=key_type, value=key_value)
                 self.keys.update({k: new_key})
 
+        # Update the key value to internal data structures
+        for k in self.keys.values():
+            self.update_key_value(k)
+
         # Check required keys for each group. if a value is None, raise an error
         check_key = None
         found = False
         for req_k in self.required_keys:
-            for g in group_suffixes:
-                check_key = req_k + g
+            found = False
+            is_group_key = KEY_DB[req_k].group_type == Key_Group_Types.GROUP
+            if is_group_key:
+                for g in group_suffixes:
+                    check_key = req_k + g
+                    for name, k in self.keys.items():
+                        if check_key == name and k.value is not None:
+                            found = True
+                            break
+            else:
+                check_key = req_k
                 for name, k in self.keys.items():
                     if check_key == name and k.value is not None:
                         found = True
                         break
-
-        if not found:
-            self.logger.error("Required key %s not found" % check_key)
-            raise ValueError("Required key %s not found" % check_key)
+            if not found:
+                self.logger.error("Required key %s not found" % check_key)
+                self.state = Codes_Execution_Status.ERROR
 
     def print_keys(self):
         keys = [(k, v.value, v.key_order) for k, v in self.keys.items()]
@@ -152,18 +194,13 @@ class Execution_Service():
         for k, v, _ in keys:
             self.logger.info("%s = %s" % (k, v))
 
-    def execute(self, control_file, main=None):
-        start_time = time.time()
+    def execute(self, control_file):
         self.parse_control_file(control_file)
-        self.initialize_execution()
-        self.check_keys()
-        self.logger.info("%s Execution Starts" % self.title)
-        self.print_keys()
-        if main:
-            main()
-        end_time = time.time()
-        execution_time = (end_time-start_time)/60.0
-        self.logger.info("Execution finished in %.2f minutes" % execution_time)
+        if self.state == Codes_Execution_Status.OK:
+            self.initialize_execution()
+        if self.state == Codes_Execution_Status.OK:
+            self.check_keys()
+
 
 if __name__=='__main__':
     import os

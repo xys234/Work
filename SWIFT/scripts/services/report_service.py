@@ -5,7 +5,7 @@ from logging import FileHandler
 
 class Report_Service():
 
-    FORMATTER = logging.Formatter("%(asctime)s — %(levelname)s: %(message)s")
+    FORMATTER = logging.Formatter("%(asctime)s - %(levelname)s: %(message)s", "%Y-%m-%d %H:%M:%S")
 
     def __init__(self, report_name):
         self._report_name = report_name

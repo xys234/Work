@@ -3,6 +3,11 @@
 from enum import IntEnum
 from collections import namedtuple
 
+
+class Codes_Execution_Status(IntEnum):
+    OK = 0
+    ERROR = 1
+
 class Codes_Vehicle_Class(IntEnum):
     HISTORICAL      = 1
     SYSTEM_OPTIMAL  = 2
@@ -29,7 +34,7 @@ class Key_Value_Types(IntEnum):
     FLOAT = 2
     BOOLEAN = 3
     STRING = 4
-    RANGES = 5      # comma
+    TIME_RANGE = 5      # comma-delimited integer range like 0..6, 19..24 or 6..9
 
 
 class Key_Group_Types(IntEnum):
@@ -43,64 +48,47 @@ KEY_DB = {
         'TITLE':                    Key_Info(Key_Value_Types.STRING,      None,              Key_Group_Types.NOGROUP, 1),
         'REPORT_FILE':              Key_Info(Key_Value_Types.STRING,      None,              Key_Group_Types.NOGROUP, 2),
         'PROJECT_DIRECTORY':        Key_Info(Key_Value_Types.STRING,      None,              Key_Group_Types.NOGROUP, 3),
+        'RANDOM_SEED':              Key_Info(Key_Value_Types.INTEGER,     0,                Key_Group_Types.NOGROUP, 4),
 
-        'TRIP_TABLE_FILE':          Key_Info(Key_Value_Types.STRING,      None,                         Key_Group_Types.GROUP, 10),
-        'MATRIX_NAME':              Key_Info(Key_Value_Types.STRING,      None,                         Key_Group_Types.GROUP, 11),
-        'TIME_PERIOD_RANGE':        Key_Info(Key_Value_Types.RANGES,      "0..24",                      Key_Group_Types.GROUP, 12),
-        'DIURNAL_FILE':             Key_Info(Key_Value_Types.STRING,      None,                         Key_Group_Types.GROUP, 13),
-        'TRIP_PURPOSE_CODE':        Key_Info(Key_Value_Types.INTEGER,     1,                            Key_Group_Types.GROUP, 14),
-        'VALUE_OF_TIME':            Key_Info(Key_Value_Types.FLOAT,       10.0,                         Key_Group_Types.GROUP, 15),
-        'VEHICLE_CLASS':            Key_Info(Key_Value_Types.INTEGER,     Codes_Vehicle_Class.UE,       Key_Group_Types.GROUP, 16),
-        'VEHICLE_TYPE':             Key_Info(Key_Value_Types.INTEGER,     1,                            Key_Group_Types.GROUP, 17),
-        'VEHICLE_OCCUPANCY':        Key_Info(Key_Value_Types.INTEGER,     Codes_Vehicle_Occupancy.SOV,  Key_Group_Types.GROUP, 18),
-        'VEHICLE_GENERATION_MODE':  Key_Info(Key_Value_Types.INTEGER,     1,    Key_Group_Types.GROUP, 19),
-        'INDIFFERENCE_BAND':        Key_Info(Key_Value_Types.FLOAT,       0.0,  Key_Group_Types.GROUP, 20),
-        'NUMBER_OF_STOPS':          Key_Info(Key_Value_Types.INTEGER,     1,    Key_Group_Types.GROUP, 21),
-        'ENROUTE_INFO':             Key_Info(Key_Value_Types.INTEGER,     0,    Key_Group_Types.GROUP, 22),
-        'COMPLIANCE_RATE':          Key_Info(Key_Value_Types.FLOAT,       0.0,  Key_Group_Types.GROUP, 23),
-        'EVACUATION_FLAG':          Key_Info(Key_Value_Types.INTEGER,     0,    Key_Group_Types.GROUP, 24),
-        'ACTIVITY_DURATION':        Key_Info(Key_Value_Types.FLOAT,       0.0,  Key_Group_Types.GROUP, 25),
-        'ARRIVAL_TIME':             Key_Info(Key_Value_Types.FLOAT,       0.0,  Key_Group_Types.GROUP, 26),
-        'WAIT_TIME':                Key_Info(Key_Value_Types.FLOAT,       0.0,  Key_Group_Types.GROUP, 27),
-        'INITIAL_GAS':              Key_Info(Key_Value_Types.FLOAT,       0.0,  Key_Group_Types.GROUP, 28)
+        'NUMBER_OF_ZONES':          Key_Info(Key_Value_Types.INTEGER,     None, Key_Group_Types.NOGROUP, 20),
+        'ORIGIN_FILE':              Key_Info(Key_Value_Types.STRING,      None, Key_Group_Types.NOGROUP, 21),
+        'VEHICLE_ROSTER_FILE':      Key_Info(Key_Value_Types.STRING,      None, Key_Group_Types.NOGROUP, 22),
+
+        'TRIP_TABLE_FILE':          Key_Info(Key_Value_Types.STRING,      None,                         Key_Group_Types.GROUP, 100),
+        'MATRIX_NAME':              Key_Info(Key_Value_Types.STRING,      None,                         Key_Group_Types.GROUP, 101),
+        'TIME_PERIOD_RANGE':        Key_Info(Key_Value_Types.TIME_RANGE,  "0..24",                      Key_Group_Types.GROUP, 102),
+        'DIURNAL_FILE':             Key_Info(Key_Value_Types.STRING,      None,                         Key_Group_Types.GROUP, 103),
+        'TRIP_PURPOSE_CODE':        Key_Info(Key_Value_Types.INTEGER,     1,                            Key_Group_Types.GROUP, 104),
+        'VALUE_OF_TIME':            Key_Info(Key_Value_Types.FLOAT,       10.0,                         Key_Group_Types.GROUP, 105),
+        'VEHICLE_CLASS':            Key_Info(Key_Value_Types.INTEGER,     Codes_Vehicle_Class.UE,       Key_Group_Types.GROUP, 106),
+        'VEHICLE_TYPE':             Key_Info(Key_Value_Types.INTEGER,     1,                            Key_Group_Types.GROUP, 107),
+        'VEHICLE_OCCUPANCY':        Key_Info(Key_Value_Types.INTEGER,     Codes_Vehicle_Occupancy.SOV,  Key_Group_Types.GROUP, 108),
+        'VEHICLE_GENERATION_MODE':  Key_Info(Key_Value_Types.INTEGER,     1,    Key_Group_Types.GROUP, 109),
+        'INDIFFERENCE_BAND':        Key_Info(Key_Value_Types.FLOAT,       0.0,  Key_Group_Types.GROUP, 110),
+        'NUMBER_OF_STOPS':          Key_Info(Key_Value_Types.INTEGER,     1,    Key_Group_Types.GROUP, 111),
+        'ENROUTE_INFO':             Key_Info(Key_Value_Types.INTEGER,     0,    Key_Group_Types.GROUP, 112),
+        'COMPLIANCE_RATE':          Key_Info(Key_Value_Types.FLOAT,       0.0,  Key_Group_Types.GROUP, 113),
+        'EVACUATION_FLAG':          Key_Info(Key_Value_Types.INTEGER,     0,    Key_Group_Types.GROUP, 114),
+        'ACTIVITY_DURATION':        Key_Info(Key_Value_Types.FLOAT,       0.0,  Key_Group_Types.GROUP, 115),
+        'ARRIVAL_TIME':             Key_Info(Key_Value_Types.FLOAT,       0.0,  Key_Group_Types.GROUP, 116),
+        'WAIT_TIME':                Key_Info(Key_Value_Types.FLOAT,       0.0,  Key_Group_Types.GROUP, 117),
+        'INITIAL_GAS':              Key_Info(Key_Value_Types.FLOAT,       0.0,  Key_Group_Types.GROUP, 118)
+
+
 }
 
 
 
-##### -------------  Utility ----------------- ####
-def parse_time_range(time_range):
-    """
-
-    :param time_range: parse comma-separated ranges like "0..6, 15..19"
-    :type  str
-    :return: "0..6, 15..19" is parsed into [(0, 6), (15, 19)]
-    """
-
-    if not isinstance(time_range, str):
-        raise TypeError("Time range must be a string")
-
-    parts = time_range.split(",")
-    ranges = []
-
-    for part in parts:
-        if part.find("..") < 0:
-            raise ValueError("Time range must have both start and end times. Input is %s" % part)
-        else:
-            start_time, end_time = part.split("..")
-            ranges.append((float(start_time), float(end_time)))
-
-    return ranges
-
-
 if __name__=='__main__':
-    time_range = "0..6, 19..24"
-    print(parse_time_range(time_range))
-
-    time_range = "15..19"
-    print(parse_time_range(time_range))
-
-    # time_range = 3
+    pass
+    # time_range = "0..6, 19..24"
     # print(parse_time_range(time_range))
-
-    time_range = "17, 18"
-    print(parse_time_range(time_range))
+    #
+    # time_range = "15..19"
+    # print(parse_time_range(time_range))
+    #
+    # # time_range = 3
+    # # print(parse_time_range(time_range))
+    #
+    # time_range = "17, 18"
+    # print(parse_time_range(time_range))

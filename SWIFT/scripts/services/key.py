@@ -78,18 +78,6 @@ class Key():
         return {self.key: key(self.key, self.key_type, self.value_default,
                               self.value_type, self.root_key, self.key_group, self.value)}
 
-    def _update_key_value(self):
-        if self.value:
-            if self.value_type == Key_Value_Types.STRING:
-                converter = str
-            elif self.value_type == Key_Value_Types.FLOAT:
-                converter = float
-            elif self.value_type == Key_Value_Types.RANGES:
-                converter = parse_time_range
-            else:
-                converter = int
-            self.value = converter(self.value)
-
     def _initialize_key(self):
         """
          update the fields based on the key database
@@ -112,8 +100,6 @@ class Key():
 
         if self.value is None:
             self.value = KEY_DB[self.root_key].value_default          # set to default value
-
-        self._update_key_value()
 
     @classmethod
     def get_root(cls, keyname):
