@@ -48,7 +48,7 @@ KEY_DB = {
         'TITLE':                    Key_Info(Key_Value_Types.STRING,      None,              Key_Group_Types.NOGROUP, 1),
         'REPORT_FILE':              Key_Info(Key_Value_Types.STRING,      None,              Key_Group_Types.NOGROUP, 2),
         'PROJECT_DIRECTORY':        Key_Info(Key_Value_Types.STRING,      None,              Key_Group_Types.NOGROUP, 3),
-        'RANDOM_SEED':              Key_Info(Key_Value_Types.INTEGER,     0,                Key_Group_Types.NOGROUP, 4),
+        'RANDOM_SEED':              Key_Info(Key_Value_Types.INTEGER,     0,                 Key_Group_Types.NOGROUP, 4),
 
         'NUMBER_OF_ZONES':          Key_Info(Key_Value_Types.INTEGER,     None, Key_Group_Types.NOGROUP, 20),
         'ORIGIN_FILE':              Key_Info(Key_Value_Types.STRING,      None, Key_Group_Types.NOGROUP, 21),

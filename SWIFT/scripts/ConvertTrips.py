@@ -3,7 +3,7 @@ import time, h5py, numpy as np
 
 from services.sys_defs import *
 from services.execution_service import Execution_Service
-from services.data_service import DTGenerator, read_diurnal_file, normal_rounding
+from services.data_service import DTGenerator, read_diurnal_file, bucket_rounding
 from services.network_service import parse_origins
 
 class ConvertTrips(Execution_Service):
@@ -153,7 +153,7 @@ class ConvertTrips(Execution_Service):
         period = self.time_period_range
         field_filler = 0
 
-        od = normal_rounding(od)
+        od = bucket_rounding(od)
         total_trips = od.sum()
         self.logger.info("Total vehicles in the matrix after rounding = {0:d}".format(total_trips))
 
