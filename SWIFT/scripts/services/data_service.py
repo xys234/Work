@@ -64,18 +64,24 @@ def bucket_rounding(mat):
     :return: an numpy 2d-array of dtype np.uint16
     """
 
+    # todo: implement as pure list iteration by rows
     if len(mat.shape) != 2:
         raise ValueError("Input must be a 2-dimensional numpy array")
 
-    rounded = np.zeros_like(mat, dtype=mat.dtype)
-    for i in range(mat.shape[0]):
+    threshold = 0.05
+    rows, columns = mat.shape
+    mat_list = mat.tolist()
+    for i in range(rows):
         residual = 0
-        for j in range(mat.shape[1]):
-            if mat[i, j] != 0:
-                val = np.round(mat[i, j] + residual)
-                residual += mat[i, j] - val
-                rounded[i, j] = val
+        if mat[i].sum() <= threshold:
+            continue
+        for j in range(columns):
+            if mat_list[i][j] != 0:
+                val = np.round(mat_list[i][j] + residual)
+                residual += mat_list[i][j] - val
+                mat_list[i][j] = val
 
+    rounded = np.array(mat_list)
     total_diff = int(round(rounded.sum() - mat.sum()))
     diff = np.where(total_diff > 0, -1, 1)
     indices = np.argsort(np.diagonal(rounded))[::-1].astype(np.int16)[:np.abs(total_diff)]

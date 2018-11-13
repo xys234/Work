@@ -197,9 +197,9 @@ class Execution_Service():
     def execute(self, control_file):
         self.parse_control_file(control_file)
         if self.state == Codes_Execution_Status.OK:
-            self.initialize_execution()
-        if self.state == Codes_Execution_Status.OK:
             self.check_keys()
+        if self.state == Codes_Execution_Status.OK:
+            self.initialize_execution()
 
 
 if __name__=='__main__':
