@@ -156,6 +156,7 @@ class ConvertTrips(Execution_Service):
         od = bucket_rounding(od)
         total_trips = od.sum()
         self.logger.info("Total vehicles in the matrix after rounding = {0:d}".format(total_trips))
+        print('AFTER rounding    time = {0:.0f}'.format(time.time()))
 
         dt_pool = (t for t in self.dt_generator.dt(period=period, size=total_trips))
         for i in range(od.shape[0]):
@@ -172,7 +173,7 @@ class ConvertTrips(Execution_Service):
                         yield anode, bnode, dtime, vclass, vtype, self.vehicle_occupancy, \
                               self.vehicle_gen_mode, self.number_of_stops, self.enroute_info, self.indifference_band, \
                               self.compliance_rate, orig, self.evac_flag, ipos, vot, field_filler, self.arrival_time, \
-                              purp, self.initial_gas, dest, self.wait_time
+                              purp, self.initial_gas, dest, self.wait_time      # 21 fields
 
     def write_vehicles(self, vehicle_pool):
         if self.state == Codes_Execution_Status.ERROR:
@@ -182,7 +183,7 @@ class ConvertTrips(Execution_Service):
         open_mode = 'a'
         if self.vehicle_id == 1:
             open_mode = 'w'
-        with open(self.vehicle_roster_file, mode=open_mode, buffering=10_000) as f:
+        with open(self.vehicle_roster_file, mode=open_mode, buffering=10_000_000) as f:
             for i, vals in enumerate(vehicle_pool):
                 vid = self.vehicle_id + i
                 data = (vid, *vals[:-2])
@@ -190,7 +191,10 @@ class ConvertTrips(Execution_Service):
                 f.write(record)
                 record = '%12d%7.2f\n' % (vals[-2:])
                 f.write(record)
+                if i > 0 and i % 1000 == 0:
+                    print('Wrote 1000 records = {0:.0f}'.format(time.time()))
 
+        print('AFTER write_vehicles time = {0:.0f}'.format(time.time()))
         self.logger.info("Total vehicles converted                    = {0:d}".format(vid))
         self.vehicle_id = vid + 1
 
@@ -211,6 +215,7 @@ class ConvertTrips(Execution_Service):
 
         for i in range(self.highest_group):
             self.initialize_internal_data(i+1)
+            print('AFTER initialization time = {0:.0f}'.format(time.time()))
             vehicle_pool = self.to_vehicles()
             self.write_vehicles(vehicle_pool)
 

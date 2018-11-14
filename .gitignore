@@ -11,3 +11,7 @@
 **/*.pyc
 **/*.tmp
 *.log
+*.omx
+*.prn
+*.txt
+*.csv
