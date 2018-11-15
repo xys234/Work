@@ -6,7 +6,7 @@ from services.data_service import DTGenerator
 from services.network_service import parse_origins
 from services.report_service import Report_Service
 
-def to_vehicles(matrix, tab, dt_generator, vots, period_def, origins, logger):
+def to_vehicles(matrix, tab, dt_generator, vots, period_def, origins, rounding=True, logger=None):
     """
 
     :param matrix: an omx matrix file for a period-purpose combination
@@ -77,31 +77,36 @@ def to_vehicles(matrix, tab, dt_generator, vots, period_def, origins, logger):
             break
 
 
-        od = h5['/matrices/' + tab][:]
-        # Step 1: round the matrix
-        logger.info('START rounding    time = {0:.0f}'.format(time.time()))
+    od = h5['/matrices/' + tab][:]
+    # Step 1: round the matrix
+    logger.info('Total number of trips = {0:.2f}'.format(od.sum()))
+    start_time = time.time()
+    if rounding:
         od = bucket_rounding(od)
-        logger.info('AFTER rounding    time = {0:.0f}'.format(time.time()))
+    logger.info('rounding complete in {0:.0f} seconds'.format(time.time()-start_time))
 
-        # Step 2: get the departure times
-        total_trips = od.sum()
-        logger.info('Total number of trips  = {0:.0f}'.format(total_trips))
-        dt_pool = (t for t in dt_generator.dt(period=period_def[period], size=total_trips))
+    # Step 2: get the departure times
+    total_trips = od.sum()
+    logger.info('Total number of trips after rounding = {0:.0f}'.format(total_trips))
+    dt_pool = (t for t in dt_generator.dt(period=period_def[period], size=total_trips))
 
-        # Step 3: write the vehicle records
-        for i in range(od.shape[0]):
-            for j in range(od.shape[0]):
-                trip = od[i][j]
-                if trip > 0:
-                    gen_link_choice = np.random.choice(len(origins[i+1]))
-                    anode, bnode = origins[i+1][gen_link_choice][0], origins[i+1][gen_link_choice][1]
-                    orig = i + 1
-                    dest = j + 1
-                    ipos = float(np.random.randint(1, 10000)) / 10000
-                    for k in range(trip):
-                        dtime = next(dt_pool)
-                        yield anode, bnode, dtime, muc_class, vtype, 0, 0, 1, 0, 0.2, 0, orig, 0, ipos, vot, 0, 0, purp, 0, dest, 0
+    # Step 3: write the vehicle records
+    for i in range(od.shape[0]):
+        for j in range(od.shape[0]):
+            trip = od[i][j]
+            if trip > 0:
+                gen_link_choice = np.random.choice(len(origins[i+1]))
+                anode, bnode = origins[i+1][gen_link_choice][0], origins[i+1][gen_link_choice][1]
+                orig = i + 1
+                dest = j + 1
+                ipos = float(np.random.randint(1, 10000)) / 10000
+                for k in range(trip):
+                    dtime = next(dt_pool)
+                    yield anode, bnode, dtime, muc_class, vtype, 0, 0, 1, 0, 0.2, 0, orig, 0, ipos, vot, 0, 0, purp, 0, dest, 0
 
+def print_vehicles(vehicle_pool):
+    for v in vehicle_pool:
+        print(v)
 
 def write_vehicles(vehicle_file, vehicle_pool, start_id=1, logger=None):
     '''
@@ -116,7 +121,7 @@ def write_vehicles(vehicle_file, vehicle_pool, start_id=1, logger=None):
         vid = start_id
         for i, vals in enumerate(vehicle_pool):
             time_1 = time.time()
-            logger.info('DEBUG: TRIP {0:d} = {1:.8f}'.format(i, time_1))
+            # logger.info('DEBUG: TRIP {0:d} = {1:.8f}'.format(i, time_1))
             vid = start_id + i
             data = (vid, *vals[:-2])
             time_2 = time.time()
@@ -175,8 +180,14 @@ if __name__ == '__main__':
 
     origins = parse_origins(origin_file, logger=logger)
 
-    # matrix_file = r'C:\Projects\Repo\Work\SWIFT\data\Dynus_T\OD\2017\OD AM3HR HBNW Vehicles.omx'
+    # matrix_file = r'C:\Projects\Repo\Work\SWIFT\data\Dynus_T\OD\2017\OD AM3HR HBW Vehicles.omx'
     matrix_file = r'C:\Projects\Repo\Work\SWIFT\scripts\test\test.omx'
-    tab = 'amhnwai3a2'
-    vehicle_pool = to_vehicles(matrix_file, tab, dt_generator, vots, period_def, origins, logger=logger)
+
+    # tab = 'amhnwai3a2'
+    tab = 'amhbwi1da'
+    # vehicle_pool = to_vehicles(matrix_file, tab, dt_generator, vots, period_def, origins, rounding=False, logger=logger)
+    vehicle_pool = to_vehicles(matrix_file, tab, dt_generator, vots, period_def, origins, rounding=True, logger=logger)
+    # print_vehicles(vehicle_pool)
+    start_time = time.time()
     write_vehicles(vehicle_file, vehicle_pool, logger=logger)
+    logger.info("Complete in {0:.0f} seconds".format(time.time()-start_time))

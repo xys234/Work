@@ -156,8 +156,9 @@ class ConvertTrips(Execution_Service):
         od = bucket_rounding(od)
         total_trips = od.sum()
         self.logger.info("Total vehicles in the matrix after rounding = {0:d}".format(total_trips))
-        print('AFTER rounding    time = {0:.0f}'.format(time.time()))
 
+        # todo: move the generation link into trip loop; skip rows with total trip less than 1; increase buffer size
+        # todo: open matrix file catch exception
         dt_pool = (t for t in self.dt_generator.dt(period=period, size=total_trips))
         for i in range(od.shape[0]):
             for j in range(od.shape[0]):
@@ -191,10 +192,7 @@ class ConvertTrips(Execution_Service):
                 f.write(record)
                 record = '%12d%7.2f\n' % (vals[-2:])
                 f.write(record)
-                if i > 0 and i % 1000 == 0:
-                    print('Wrote 1000 records = {0:.0f}'.format(time.time()))
 
-        print('AFTER write_vehicles time = {0:.0f}'.format(time.time()))
         self.logger.info("Total vehicles converted                    = {0:d}".format(vid))
         self.vehicle_id = vid + 1
 
@@ -214,10 +212,11 @@ class ConvertTrips(Execution_Service):
         self.print_keys()
 
         for i in range(self.highest_group):
+            start_time = time.time()
             self.initialize_internal_data(i+1)
-            print('AFTER initialization time = {0:.0f}'.format(time.time()))
             vehicle_pool = self.to_vehicles()
             self.write_vehicles(vehicle_pool)
+            self.logger.info("Matrix Converted in %.2f minutes" % ((time.time()-start_time)/60))
 
         self.logger.info("")
         self.logger.info("")

@@ -105,7 +105,8 @@ if __name__ == '__main__':
     matrices_md = ["OD MD6HR HBNW Vehicles", "OD MD6HR HBW Vehicles", "OD MD6HR NHB Vehicles", "OD MD6HR Other VEHICLEs"]
     matrices_pm = ["OD PM4HR HBNW Vehicles", "OD PM4HR HBW Vehicles", "OD PM4HR NHB Vehicles", "OD PM4HR Other VEHICLEs"]
     matrices_ov = ["OD OV8HR HBNW Vehicles", "OD OV8HR HBW Vehicles", "OD OV8HR NHB Vehicles", "OD OV8HR Other VEHICLEs"]
-    matrices = matrices_am + matrices_md + matrices_pm + matrices_ov
+    # matrices = matrices_am + matrices_md + matrices_pm + matrices_ov
+    matrices = matrices_am
 
     purp = ["hnw", "hbw", "nho", "nhw"]
     periods = ["am", "md", "pm", "ov"]
