@@ -137,6 +137,10 @@ class ConvertTrips(Execution_Service):
     def to_vehicles(self):
         if self.state == Codes_Execution_Status.ERROR:
             return
+        if not os.path.exists(self.trip_table_file):
+            self.state = Codes_Execution_Status.ERROR
+            self.logger.error("Failed to open trip table file %s" % self.trip_table_file)
+            return
         h5 = h5py.File(self.trip_table_file, 'r')
         self.logger.info("")
         self.logger.info("Processing trip table %s" % self.trip_table_file)
@@ -157,19 +161,19 @@ class ConvertTrips(Execution_Service):
         total_trips = od.sum()
         self.logger.info("Total vehicles in the matrix after rounding = {0:d}".format(total_trips))
 
-        # todo: move the generation link into trip loop; skip rows with total trip less than 1; increase buffer size
-        # todo: open matrix file catch exception
         dt_pool = (t for t in self.dt_generator.dt(period=period, size=total_trips))
         for i in range(od.shape[0]):
+            if od[i].sum() < 1:
+                continue
             for j in range(od.shape[0]):
                 trip = od[i][j]
                 if trip > 0:
-                    gen_link_choice = np.random.choice(len(self.origins[i+1]))
-                    anode, bnode = self.origins[i+1][gen_link_choice][0], self.origins[i+1][gen_link_choice][1]
                     orig = i + 1
                     dest = j + 1
-                    ipos = float(np.random.randint(1, 10000)) / 10000
                     for k in range(trip):
+                        gen_link_choice = np.random.choice(len(self.origins[i+1]))
+                        anode, bnode = self.origins[i+1][gen_link_choice][0], self.origins[i+1][gen_link_choice][1]
+                        ipos = float(np.random.randint(1, 10000)) / 10000
                         dtime = next(dt_pool)
                         yield anode, bnode, dtime, vclass, vtype, self.vehicle_occupancy, \
                               self.vehicle_gen_mode, self.number_of_stops, self.enroute_info, self.indifference_band, \
@@ -184,7 +188,7 @@ class ConvertTrips(Execution_Service):
         open_mode = 'a'
         if self.vehicle_id == 1:
             open_mode = 'w'
-        with open(self.vehicle_roster_file, mode=open_mode, buffering=10_000_000) as f:
+        with open(self.vehicle_roster_file, mode=open_mode, buffering=20_000_000) as f:
             for i, vals in enumerate(vehicle_pool):
                 vid = self.vehicle_id + i
                 data = (vid, *vals[:-2])
@@ -206,29 +210,27 @@ class ConvertTrips(Execution_Service):
 
         """
         super().execute(control_file)
-        self.logger.info("%s Execution Starts" % self.title)
-        start_time = time.time()
-        self.update_keys()
-        self.print_keys()
-
-        for i in range(self.highest_group):
+        if self.state == Codes_Execution_Status.OK:
             start_time = time.time()
-            self.initialize_internal_data(i+1)
-            vehicle_pool = self.to_vehicles()
-            self.write_vehicles(vehicle_pool)
-            self.logger.info("Matrix Converted in %.2f minutes" % ((time.time()-start_time)/60))
+            self.update_keys()
+            self.print_keys()
 
-        self.logger.info("")
-        self.logger.info("")
-        self.logger.info("-----------------------------------------------------------")
-        self.logger.info("Total vehicles converted               = {0:d}".format(self.vehicle_id-1))
-        end_time = time.time()
-        execution_time = (end_time-start_time)/60.0
+            for i in range(self.highest_group):
+                if self.state == Codes_Execution_Status.OK:
+                    matrix_conversion_start_time = time.time()
+                    self.initialize_internal_data(i+1)
+                    vehicle_pool = self.to_vehicles()
+                    self.write_vehicles(vehicle_pool)
+                    self.logger.info("Matrix Converted in %.2f minutes" % ((time.time()-matrix_conversion_start_time)/60))
+
+            end_time = time.time()
+            execution_time = (end_time-start_time)/60.0
         self.logger.info("")
         self.logger.info("")
         if self.state == Codes_Execution_Status.ERROR:
             self.logger.info("Execution completed with ERROR in %.2f minutes" % execution_time)
         else:
+            self.logger.info("Total vehicles converted               = {0:d}".format(self.vehicle_id - 1))
             self.logger.info("Execution completed in %.2f minutes" % execution_time)
 
 

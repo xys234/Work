@@ -3,6 +3,7 @@ from services.sys_defs import *
 from collections import namedtuple
 
 class Key():
+    # todo: add an _input_value attribute; revise value to be the internal value
     def __init__(self, key=None, key_type=None, value=None):
         self._key = key
         self._key_type = key_type

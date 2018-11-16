@@ -1,5 +1,6 @@
 **/.ipynb_checkpoints
 **/.idea
+**/.cache
 **/*.csv
 **/*.zip
 **/data/*.*
@@ -15,3 +16,5 @@
 *.prn
 *.txt
 *.csv
+*.dat
+*.png

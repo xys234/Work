@@ -16,7 +16,7 @@ class Execution_Service():
         'TITLE', 'REPORT_FILE', 'PROJECT_DIRECTORY', 'RANDOM_SEED'
     )
 
-    def __init__(self, name=None, required_keys=None, acceptable_keys=None):
+    def __init__(self, name=None, control_file=None, required_keys=tuple(), acceptable_keys=tuple()):
         self.name = name
         self.keys = {}                                      # a dictionary for all keys {'key_name': key_object}
         self.required_keys = required_keys                  # a tuple for all root-keys required
@@ -24,6 +24,8 @@ class Execution_Service():
         self.acceptable_keys += self.required_keys
         self.highest_group = 1
 
+        self.control_file = control_file
+        self.execution_dir = None
         self.title = None
         self.report_file = None
         self.project_dir = None
@@ -31,6 +33,14 @@ class Execution_Service():
         self.logger = None
 
         self.state = Codes_Execution_Status.OK      # todo: remove all raise errors
+
+    @property
+    def state(self):
+        return self._state
+
+    @state.setter
+    def state(self, state):
+        self._state = state
 
     @staticmethod
     def is_comment(line):
@@ -79,16 +89,19 @@ class Execution_Service():
             self.title = self.name
         self.keys['TITLE'].value = self.title
 
+        # project directory only applies to non-common keys
         if self.keys['PROJECT_DIRECTORY'].value:
             self.project_dir = self.keys['PROJECT_DIRECTORY'].value
-        self.keys['PROJECT_DIRECTORY'].value = self.project_dir
+        else:
+            self.project_dir = ''
 
         if self.keys['REPORT_FILE'].value:
-            self.report_file = self.keys['REPORT_FILE'].value
+            if self.keys['REPORT_FILE'].value.find('.prn') < 0:
+                self.report_file = self.keys['REPORT_FILE'].value + ".prn"
         else:
-            self.report_file = self.name + ".prn"
-        self.report_file = os.path.join(self.project_dir, self.report_file)
-        self.keys['REPORT_FILE'].value = self.report_file
+            self.keys['REPORT_FILE'].value = os.path.basename(self.control_file)[:-4] + '.prn'
+            self.report_file = self.keys['REPORT_FILE'].value
+        self.report_file = os.path.join(self.execution_dir, self.report_file)
 
         if 'RANDOM_SEED' not in self.keys.keys():
             self.keys['RANDOM_SEED'] = Key('RANDOM_SEED', key_type=Control_Key_Types.OPTIONAL)
@@ -96,28 +109,30 @@ class Execution_Service():
         self.random_seed = self.keys['RANDOM_SEED'].value
         self.logger = Report_Service(self.report_file).get_logger()
 
-    def parse_control_file(self, control_file):
+    def parse_control_file(self):
         """
         Parse the control file to update the keys
         :param control_file:
         :return:
         """
-        if not os.path.exists(control_file):
-            print("Control file %s is not found" % control_file)
-            self.state = Codes_Execution_Status.ERROR
 
-        with open(control_file, mode='r') as control:
-            for line in control:
-                line = line.strip()
-                if line and not self.is_comment(line):
-                    key, value = self.split_key_value(self.strip_comment(line))
-                    key_type = Control_Key_Types.REQUIRED
-                    if key not in self.required_keys:
-                        key_type = Control_Key_Types.OPTIONAL
-                    key = Key(key=key, key_type=key_type, value=value)
-                    if key.key_group > self.highest_group:
-                        self.highest_group = key.key_group
-                    self.keys.update({key.key: key})
+        if not os.path.exists(self.control_file):
+            self.state = Codes_Execution_Status.ERROR
+            raise FileNotFoundError("Control file %s is not found" % self.control_file)
+        else:
+            self.execution_dir = os.path.dirname(self.control_file)
+            with open(self.control_file, mode='r') as control:
+                for line in control:
+                    line = line.strip()
+                    if line and not self.is_comment(line):
+                        key, value = self.split_key_value(self.strip_comment(line))
+                        key_type = Control_Key_Types.REQUIRED
+                        if key not in self.required_keys:
+                            key_type = Control_Key_Types.OPTIONAL
+                        key = Key(key=key, key_type=key_type, value=value)
+                        if key.key_group > self.highest_group:
+                            self.highest_group = key.key_group
+                        self.keys.update({key.key: key})
 
     def update_key_value(self, key):
         if key.value:
@@ -154,10 +169,13 @@ class Execution_Service():
                 if root_key_name in self.required_keys:
                     key_type = Control_Key_Types.REQUIRED
 
-                # take previous group's value if not specified; otherwise default value
+                # take the value of the first defined group if not specified; otherwise default value
                 key_value = KEY_DB[root_key_name].value_default
                 if key_group > 1:
-                    key_value = self.keys[root_key_name+"_"+str(key_group-1)].value
+                    prev_group = key_group-1
+                    while root_key_name+"_"+str(prev_group) not in self.keys:
+                        prev_group -= 1
+                    key_value = self.keys[root_key_name+"_"+str(prev_group)].value
                 new_key = Key(key=k, key_type=key_type, value=key_value)
                 self.keys.update({k: new_key})
 
@@ -194,28 +212,28 @@ class Execution_Service():
         for k, v, _ in keys:
             self.logger.info("%s = %s" % (k, v))
 
-    def execute(self, control_file):
-        self.parse_control_file(control_file)
+    def execute(self):
+        self.parse_control_file()
+        self.initialize_execution()
         if self.state == Codes_Execution_Status.OK:
+            self.logger.info("%s Execution Starts" % self.title)
             self.check_keys()
-        if self.state == Codes_Execution_Status.OK:
-            self.initialize_execution()
 
 
-if __name__=='__main__':
+if __name__ == '__main__':
     import os
 
     program_name = "ConvertTrips"
-    acceptable_keys = ('TITLE', 'REPORT_FILE', 'PROJECT_DIRECTORY', 'VEHICLE_CLASS')
-    required_keys = ('TRIP_TABLE_FILE', 'DIURNAL_FILE', 'VALUE_OF_TIME')
-    acceptable_keys = acceptable_keys + required_keys
+    required_keys = ('TRIP_TABLE_FILE',)
+    acceptable_keys = ('NUMBER_OF_STOPS',)
 
-    execution_path = "C:\Projects\Repo\Work\SWIFT\data"
-    control_file = "ConvertTrips.ctl"
+    execution_path = r"C:\Projects\Repo\Work\SWIFT\scripts\test\cases"
+    control_file = "ConvertTrips_1.ctl"
     control_file = os.path.join(execution_path, control_file)
 
-    exe = Execution_Service(name=program_name, required_keys=required_keys, acceptable_keys=acceptable_keys)
-    exe.execute(control_file)
+    exe = Execution_Service(name=program_name, control_file=control_file,
+                            required_keys=required_keys, acceptable_keys=acceptable_keys)
+    exe.execute()
 
 
 

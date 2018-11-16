@@ -64,7 +64,6 @@ def bucket_rounding(mat):
     :return: an numpy 2d-array of dtype np.uint16
     """
 
-    # todo: implement as pure list iteration by rows
     if len(mat.shape) != 2:
         raise ValueError("Input must be a 2-dimensional numpy array")
 
@@ -184,5 +183,5 @@ def read_diurnal_file(diurnal_file, logger=None):
 
 
 if __name__ == '__main__':
-    # todo: Investigate the rounding issue. Use large matrix with very small values
+
     pass
