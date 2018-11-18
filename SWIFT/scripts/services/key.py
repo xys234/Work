@@ -2,9 +2,10 @@
 from services.sys_defs import *
 from collections import namedtuple
 
+
 class Key():
-    # todo: add an _input_value attribute; revise value to be the internal value
-    def __init__(self, key=None, key_type=None, value=None):
+
+    def __init__(self, key=None, key_type=None, input_value=None):
         self._key = key
         self._key_type = key_type
         self._value_default = None
@@ -12,8 +13,9 @@ class Key():
         self._root_key = None
         self._key_group = 0
         self._key_order = 0
-        self.value = value
+        self._input_value = input_value
 
+        self.value = None
         self._initialize_key()
 
     @property
@@ -23,6 +25,14 @@ class Key():
     @value.setter
     def value(self, value):
         self._value = value
+
+    @property
+    def input_value(self):
+        return self._input_value
+
+    @input_value.setter
+    def input_value(self, value):
+        self._input_value = value
 
     @property
     def key(self):
@@ -70,7 +80,8 @@ class Key():
 
     def __str__(self):
         return str(dict(key=self.key, key_type=self._key_type, root_key=self.root_key,
-                        value_type=self._value_type, value=self.value, key_group=self.key_group
+                        value_type=self._value_type, input_value=self.input_value,
+                        value=self.value, key_group=self.key_group
                         )
                    )
 
@@ -99,8 +110,8 @@ class Key():
         else:
             self.root_key = None
 
-        if self.value is None:
-            self.value = KEY_DB[self.root_key].value_default          # set to default value
+        if self.input_value is None:
+            self.input_value = KEY_DB[self.root_key].value_default          # set to default value
 
     @classmethod
     def get_root(cls, keyname):

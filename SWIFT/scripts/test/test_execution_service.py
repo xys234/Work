@@ -15,21 +15,6 @@ def test_missing_control_file():
 
 
 @pytest.mark.skip(reason="passed")
-def test_missing_required_key():
-    """
-    Test missing required key; The program status should be ERROR
-    :return:
-    """
-    name = 'ConvertTrips'
-    control_file = r'cases\ConvertTrips_1.ctl'
-    required_keys = ('TRIP_TABLE_FILE',)
-    acceptable_keys = ('NUMBER_OF_STOPS',)
-    es = Execution_Service(name=name, control_file=control_file,
-                           required_keys=required_keys, acceptable_keys=acceptable_keys)
-    es.execute()
-    assert es.state == Codes_Execution_Status.ERROR
-
-
 def test_comment_line():
     """
     test keys commented; should take default values
@@ -48,6 +33,47 @@ def test_comment_line():
         root_key = es.keys[k].root_key
         key_default = KEY_DB[root_key].value_default
         if key_default is None:
-            assert es.keys[k].value is None
+            assert es.keys[k].input_value is None
         else:
-            assert es.keys[k].value == key_default
+            assert es.keys[k].input_value == key_default
+
+
+@pytest.mark.skip(reason="passed")
+def test_missing_required_key():
+    """
+    Test missing required key; The program status should be ERROR
+    :return:
+    """
+    name = 'ConvertTrips'
+    control_file = r'cases\ConvertTrips_1.ctl'
+    required_keys = ('TRIP_TABLE_FILE',)
+    acceptable_keys = ('NUMBER_OF_STOPS',)
+    es = Execution_Service(name=name, control_file=control_file,
+                           required_keys=required_keys, acceptable_keys=acceptable_keys)
+    es.execute()
+    assert es.state == Codes_Execution_Status.ERROR
+
+
+# @pytest.mark.skip(reason="passed")
+def test_group_key_cascading_value():
+    """
+    Test if a group key value cascades
+    :return:
+    """
+
+    name = 'ConvertTrips'
+    control_file = r'cases\ConvertTrips_3.ctl'
+    required_keys = ('TRIP_TABLE_FILE',)
+    acceptable_keys = ('NUMBER_OF_STOPS',)
+    es = Execution_Service(name=name, control_file=control_file,
+                           required_keys=required_keys, acceptable_keys=acceptable_keys)
+    es.execute()
+
+    assert es.keys['TRIP_TABLE_FILE_1'].input_value == r'Dynus_T\test.omx'
+    assert es.keys['TRIP_TABLE_FILE_2'].input_value == es.keys['TRIP_TABLE_FILE_1'].input_value
+    assert es.keys['TRIP_TABLE_FILE_3'].input_value == es.keys['TRIP_TABLE_FILE_1'].input_value
+    assert es.keys['TRIP_TABLE_FILE_3'].value == os.path.join(es.project_dir, es.keys['TRIP_TABLE_FILE_1'].input_value)
+
+    assert es.keys['NUMBER_OF_STOPS_1'].value == KEY_DB['NUMBER_OF_STOPS'].value_default
+    assert es.keys['NUMBER_OF_STOPS_2'].value == KEY_DB['NUMBER_OF_STOPS'].value_default
+    assert es.keys['NUMBER_OF_STOPS_3'].value == 3

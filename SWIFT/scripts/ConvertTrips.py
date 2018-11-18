@@ -200,18 +200,17 @@ class ConvertTrips(Execution_Service):
         self.logger.info("Total vehicles converted                    = {0:d}".format(vid))
         self.vehicle_id = vid + 1
 
-    def execute(self, control_file):
+    def execute(self):
         """
 
-        :param control_file:
         :return:
 
         The function needs to be module-specific file
 
         """
-        super().execute(control_file)
+        super().execute()
+        start_time = time.time()
         if self.state == Codes_Execution_Status.OK:
-            start_time = time.time()
             self.update_keys()
             self.print_keys()
 
@@ -223,8 +222,9 @@ class ConvertTrips(Execution_Service):
                     self.write_vehicles(vehicle_pool)
                     self.logger.info("Matrix Converted in %.2f minutes" % ((time.time()-matrix_conversion_start_time)/60))
 
-            end_time = time.time()
-            execution_time = (end_time-start_time)/60.0
+        end_time = time.time()
+        execution_time = (end_time-start_time)/60.0
+
         self.logger.info("")
         self.logger.info("")
         if self.state == Codes_Execution_Status.ERROR:
@@ -243,4 +243,4 @@ if __name__ == '__main__':
     control_file = os.path.join(execution_path, control_file)
 
     exe = ConvertTrips()
-    exe.execute(control_file)
+    exe.execute()

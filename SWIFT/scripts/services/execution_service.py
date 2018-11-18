@@ -83,30 +83,33 @@ class Execution_Service():
         """
 
         # Populate the program properties
-        if self.keys['TITLE'].value:
-            self.title = self.keys['TITLE'].value
+        if self.keys['TITLE'].input_value:
+            self.title = self.keys['TITLE'].input_value
         else:
             self.title = self.name
         self.keys['TITLE'].value = self.title
 
         # project directory only applies to non-common keys
-        if self.keys['PROJECT_DIRECTORY'].value:
-            self.project_dir = self.keys['PROJECT_DIRECTORY'].value
+        if self.keys['PROJECT_DIRECTORY'].input_value:
+            self.project_dir = self.keys['PROJECT_DIRECTORY'].input_value
         else:
             self.project_dir = ''
+        self.keys['PROJECT_DIRECTORY'].value = self.project_dir
 
-        if self.keys['REPORT_FILE'].value:
-            if self.keys['REPORT_FILE'].value.find('.prn') < 0:
-                self.report_file = self.keys['REPORT_FILE'].value + ".prn"
+        if self.keys['REPORT_FILE'].input_value:
+            if self.keys['REPORT_FILE'].input_value.find('.prn') < 0:
+                self.report_file = self.keys['REPORT_FILE'].input_value + ".prn"
         else:
-            self.keys['REPORT_FILE'].value = os.path.basename(self.control_file)[:-4] + '.prn'
-            self.report_file = self.keys['REPORT_FILE'].value
+            self.keys['REPORT_FILE'].input_value = os.path.basename(self.control_file)[:-4] + '.prn'
+            self.report_file = self.keys['REPORT_FILE'].input_value
         self.report_file = os.path.join(self.execution_dir, self.report_file)
+        self.keys['REPORT_FILE'].value = self.report_file
 
         if 'RANDOM_SEED' not in self.keys.keys():
             self.keys['RANDOM_SEED'] = Key('RANDOM_SEED', key_type=Control_Key_Types.OPTIONAL)
+        self.random_seed = self.keys['RANDOM_SEED'].input_value
+        self.keys['RANDOM_SEED'].value = self.random_seed
 
-        self.random_seed = self.keys['RANDOM_SEED'].value
         self.logger = Report_Service(self.report_file).get_logger()
 
     def parse_control_file(self):
@@ -129,27 +132,32 @@ class Execution_Service():
                         key_type = Control_Key_Types.REQUIRED
                         if key not in self.required_keys:
                             key_type = Control_Key_Types.OPTIONAL
-                        key = Key(key=key, key_type=key_type, value=value)
+                        key = Key(key=key, key_type=key_type, input_value=value)
                         if key.key_group > self.highest_group:
                             self.highest_group = key.key_group
                         self.keys.update({key.key: key})
 
     def update_key_value(self, key):
-        if key.value:
+        if key.input_value is not None:
             if key.value_type == Key_Value_Types.TIME_RANGE:
-                val = parse_time_range(key.value, self.logger)
+                val = parse_time_range(key.input_value, self.logger)
                 if val[0][0] >= 0:
                     key.value = val
                 else:
                     self.state = Codes_Execution_Status.ERROR
-            else:
-                if key.value_type == Key_Value_Types.STRING:
-                    converter = str
-                elif key.value_type == Key_Value_Types.FLOAT:
-                    converter = float
-                else:
-                    converter = int
-                key.value = converter(key.value)
+            elif key.value_type == Key_Value_Types.STRING:
+                converter = str
+                key.value = converter(key.input_value)
+            elif key.value_type == Key_Value_Types.FLOAT:
+                converter = float
+                key.value = converter(key.input_value)
+            elif key.value_type == Key_Value_Types.INTEGER:
+                converter = int
+                key.value = converter(key.input_value)
+            elif key.value_type == Key_Value_Types.FILE:
+                if key.key_order > Codes_Key_Thresholds.COMMON_KEY:
+                    key.value = os.path.join(self.project_dir, key.input_value)
+
 
     def check_keys(self):
         """
@@ -175,8 +183,8 @@ class Execution_Service():
                     prev_group = key_group-1
                     while root_key_name+"_"+str(prev_group) not in self.keys:
                         prev_group -= 1
-                    key_value = self.keys[root_key_name+"_"+str(prev_group)].value
-                new_key = Key(key=k, key_type=key_type, value=key_value)
+                    key_value = self.keys[root_key_name+"_"+str(prev_group)].input_value
+                new_key = Key(key=k, key_type=key_type, input_value=key_value)
                 self.keys.update({k: new_key})
 
         # Update the key value to internal data structures
@@ -207,7 +215,7 @@ class Execution_Service():
                 self.state = Codes_Execution_Status.ERROR
 
     def print_keys(self):
-        keys = [(k, v.value, v.key_order) for k, v in self.keys.items()]
+        keys = [(k, v.input_value, v.key_order) for k, v in self.keys.items()]
         keys = sorted(keys, key=lambda k: k[2])
         for k, v, _ in keys:
             self.logger.info("%s = %s" % (k, v))

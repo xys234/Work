@@ -4,6 +4,11 @@ from enum import IntEnum
 from collections import namedtuple
 
 
+class Codes_Key_Thresholds(IntEnum):
+    COMMON_KEY = 19
+    NETWORK_KEY = 99
+    SYSTEM_KEY = 499
+
 class Codes_Execution_Status(IntEnum):
     OK = 0
     ERROR = 1
@@ -35,6 +40,7 @@ class Key_Value_Types(IntEnum):
     BOOLEAN = 3
     STRING = 4
     TIME_RANGE = 5      # comma-delimited integer range like 0..6, 19..24 or 6..9
+    FILE = 6
 
 
 class Key_Group_Types(IntEnum):
@@ -46,15 +52,15 @@ Key_Info = namedtuple('Key_Info', ('value_type', 'value_default', 'group_type', 
 KEY_DB = {
         # Key                       # Value_Type                  # Value_Default
         'TITLE':                    Key_Info(Key_Value_Types.STRING,      None,              Key_Group_Types.NOGROUP, 1),
-        'REPORT_FILE':              Key_Info(Key_Value_Types.STRING,      None,              Key_Group_Types.NOGROUP, 2),
+        'REPORT_FILE':              Key_Info(Key_Value_Types.FILE,      None,              Key_Group_Types.NOGROUP, 2),
         'PROJECT_DIRECTORY':        Key_Info(Key_Value_Types.STRING,      None,              Key_Group_Types.NOGROUP, 3),
         'RANDOM_SEED':              Key_Info(Key_Value_Types.INTEGER,     0,                 Key_Group_Types.NOGROUP, 4),
 
         'NUMBER_OF_ZONES':          Key_Info(Key_Value_Types.INTEGER,     None, Key_Group_Types.NOGROUP, 20),
-        'ORIGIN_FILE':              Key_Info(Key_Value_Types.STRING,      None, Key_Group_Types.NOGROUP, 21),
-        'VEHICLE_ROSTER_FILE':      Key_Info(Key_Value_Types.STRING,      None, Key_Group_Types.NOGROUP, 22),
+        'ORIGIN_FILE':              Key_Info(Key_Value_Types.FILE,      None, Key_Group_Types.NOGROUP, 21),
+        'VEHICLE_ROSTER_FILE':      Key_Info(Key_Value_Types.FILE,      None, Key_Group_Types.NOGROUP, 22),
 
-        'TRIP_TABLE_FILE':          Key_Info(Key_Value_Types.STRING,      None,                         Key_Group_Types.GROUP, 100),
+        'TRIP_TABLE_FILE':          Key_Info(Key_Value_Types.FILE,      None,                         Key_Group_Types.GROUP, 100),
         'MATRIX_NAME':              Key_Info(Key_Value_Types.STRING,      None,                         Key_Group_Types.GROUP, 101),
         'TIME_PERIOD_RANGE':        Key_Info(Key_Value_Types.TIME_RANGE,  "0..24",                      Key_Group_Types.GROUP, 102),
         'DIURNAL_FILE':             Key_Info(Key_Value_Types.STRING,      None,                         Key_Group_Types.GROUP, 103),
