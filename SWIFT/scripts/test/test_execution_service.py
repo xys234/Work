@@ -5,7 +5,7 @@ from services.sys_defs import *
 from services.execution_service import Execution_Service
 
 
-@pytest.mark.skip(reason="passed")
+# @pytest.mark.skip(reason="passed")
 def test_missing_control_file():
     name = 'ConvertTrips'
     control_file = r'cases\ConvertTrips_Not_Exist.ctl'
@@ -14,7 +14,7 @@ def test_missing_control_file():
         es.execute()
 
 
-@pytest.mark.skip(reason="passed")
+# @pytest.mark.skip(reason="passed")
 def test_comment_line():
     """
     test keys commented; should take default values
@@ -38,7 +38,7 @@ def test_comment_line():
             assert es.keys[k].input_value == key_default
 
 
-@pytest.mark.skip(reason="passed")
+# @pytest.mark.skip(reason="passed")
 def test_missing_required_key():
     """
     Test missing required key; The program status should be ERROR
