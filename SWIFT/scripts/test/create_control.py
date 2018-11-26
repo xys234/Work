@@ -82,6 +82,7 @@ def parse_matrix_table(matrix_name, vots):
 
     return dict(vtype=vtype, occ=occ, purp=purp, vot=vot, time_period=time_period, period=period)
 
+
 if __name__ == '__main__':
 
     rotation_keys = (
@@ -95,22 +96,17 @@ if __name__ == '__main__':
         'VEHICLE_TYPE',
     )
 
-
-    control_file_folder = '..\..\data\Dynus_T'
-    control_file = 'ConvertTrips_Group_Keys.ctl'
-    control_file = os.path.join(control_file_folder, control_file)
+    control_file_folder = r'cases'
 
     matrix_folder = r'C:\Projects\Repo\Work\SWIFT\data\Dynus_T\OD\2017'
     matrices_am = ["OD AM3HR HBNW Vehicles", "OD AM3HR HBW Vehicles", "OD AM3HR NHB Vehicles", "OD AM3HR Other VEHICLEs"]
     matrices_md = ["OD MD6HR HBNW Vehicles", "OD MD6HR HBW Vehicles", "OD MD6HR NHB Vehicles", "OD MD6HR Other VEHICLEs"]
     matrices_pm = ["OD PM4HR HBNW Vehicles", "OD PM4HR HBW Vehicles", "OD PM4HR NHB Vehicles", "OD PM4HR Other VEHICLEs"]
     matrices_ov = ["OD OV8HR HBNW Vehicles", "OD OV8HR HBW Vehicles", "OD OV8HR NHB Vehicles", "OD OV8HR Other VEHICLEs"]
-    # matrices = matrices_am + matrices_md + matrices_pm + matrices_ov
-    matrices = matrices_am
+    matrices = matrices_am + matrices_md + matrices_pm + matrices_ov
 
-    purp = ["hnw", "hbw", "nho", "nhw"]
+    purps = ["hnw", "hbw", "nho", "nhw"]
     periods = ["am", "md", "pm", "ov"]
-    periods_other = ["AM3", "MD6", "PM4", "OV8"]
 
     # right open; day starts at 0
     period_def = {'am': [(6, 9)], 'md': [(9,15)], 'pm': [(15,19)], 'ov': [(0, 6), (19, 24)]}
@@ -124,40 +120,87 @@ if __name__ == '__main__':
             "nhwdai1": 9.6, "nhwdai2": 15.04, "nhwdai3": 20.48, "nhwdai4": 27.52, "nhwdai5": 37.12, "nhws2i12": 21.56,
             "nhws2i3": 35.84, "nhws2i45": 56.56, "nhws3i12": 30.8, "nhws3i3": 51.2, "nhws3i45": 80.8,
             "Cargo": 64.0, "Serv": 40.0, "taxi": 18.94, "exta": 18.94}
+    diurnal_file = r'diurnal.csv'
 
-    diurnal_file = r'Dynus_T\diurnal.csv'
-    # matrix_name = 'amnhodai453'
-    # print(parse_matrix_table(matrix_name, vots))
-    #
-    # matrix_name = 'AM3taxi'
-    # print(parse_matrix_table(matrix_name, vots))
+    PURP_MAP = {
+        1: 'HBW',
+        2: 'HNW',
+        3: 'NHW',
+        4: 'NHO',
+        5: 'OTHER'
+    }
 
-    with open(control_file, mode='w') as f:
+    # period-purpose map to last key-group
+    control_file_map = {}
+    matrix_count = 0
+    for m in matrices:
         key_group = 0
-        for m in matrices:
-            matrix_file = os.path.join(matrix_folder, m+'.omx')
-            matrix_file_out = os.path.join(r'Dynus_T\OD\2017', m+'.omx')
-            h5 = h5py.File(matrix_file, 'r')
-            tables = h5['/matrices/'].keys()
-            for t in tables:
-                key_group += 1
-                info = parse_matrix_table(t, vots)
-                vtype = info['vtype']
-                occ = info['occ']
-                purp = info['purp']
-                vot = info['vot']
-                time_period = info['time_period']
-                period = info['period']
+        matrix_file = os.path.join(matrix_folder, m + '.omx')
+        matrix_file_out = os.path.join(r'OD\2017', m + '.omx')
+        h5 = h5py.File(matrix_file, 'r')
+        tables = h5['/matrices/'].keys()
 
+        for t in tables:
+            if t.find('all') > 0:
+                continue
+            matrix_count += 1
+
+            info = parse_matrix_table(t, vots)
+            vtype = info['vtype']
+            occ = info['occ']
+            purp = info['purp']
+            vot = info['vot']
+            time_period = info['time_period']
+            period = info['period']
+
+            mode = 'w'
+            control_file_suffix = PURP_MAP[purp].upper() + '_' + period.upper()
+            control_file = os.path.join(control_file_folder,
+                                        "ConvertTrips_" + control_file_suffix + ".ctl")
+            if control_file_suffix in control_file_map:
+                control_file_map[control_file_suffix] += 1
+                mode = 'a'
+            else:
+                control_file_map[control_file_suffix] = 1
+
+            key_group = control_file_map[control_file_suffix]
+
+
+            common_keys = r'''
+                    TITLE                       {0:s}
+                    PROJECT_DIRECTORY           C:\Projects\Repo\Work\SWIFT\data\Dynus_T
+                    REPORT_FILE                 
+                    
+                    NUMBER_OF_ZONES             5263
+                    ORIGIN_FILE                 origin.dat
+                    NEW_VEHICLE_ROSTER_FILE     {1:s}
+            
+            '''.format(PURP_MAP[purp]+'_'+period.upper(), 'Vehicles_'+PURP_MAP[purp]+'_'+period.upper()+'.dat')
+
+
+            with open(control_file, mode=mode) as f:
                 key_names = [k+'_'+str(key_group) for k in rotation_keys]
 
-                if vtype is not None:
-                    f.write('{0:40s}{1:s}\n'.format(key_names[0], matrix_file_out))
-                    f.write('{0:40s}{1:s}\n'.format(key_names[1], t))
-                    f.write('{0:40s}{1:s}\n'.format(key_names[2], time_period))
-                    f.write('{0:40s}{1:s}\n'.format(key_names[3], diurnal_file))
-                    f.write('{0:40s}{1:d}\n'.format(key_names[4], purp))
-                    f.write('{0:40s}{1:.2f}\n'.format(key_names[5], vot))
-                    f.write('{0:40s}{1:d}\n'.format(key_names[6], occ))
-                    f.write('{0:40s}{1:d}\n'.format(key_names[7], vtype))
+                if key_group == 1:
+                    f.write("TITLE                       {0:s}\n".format(PURP_MAP[purp]+'_'+period.upper()))
+                    f.write(r"PROJECT_DIRECTORY           C:\Projects\Repo\Work\SWIFT\data\Dynus_T")
                     f.write('\n')
+                    f.write("REPORT_FILE                      \n")
+                    f.write('\n')
+                    f.write("NUMBER_OF_ZONES             5263\n".format(PURP_MAP[purp] + '_' + period.upper()))
+                    f.write("ORIGIN_FILE                 origin.dat\n".format(PURP_MAP[purp] + '_' + period.upper()))
+                    f.write("VEHICLE_ROSTER_FILE         {0:s}\n".format('Vehicles_'+PURP_MAP[purp]+'_'+period.upper()+'.dat'))
+                    f.write('\n')
+                    f.write('\n')
+
+                f.write('{0:40s}{1:s}\n'.format(key_names[0], matrix_file_out))
+                f.write('{0:40s}{1:s}\n'.format(key_names[1], t))
+                f.write('{0:40s}{1:s}\n'.format(key_names[2], time_period))
+                f.write('{0:40s}{1:s}\n'.format(key_names[3], diurnal_file))
+                f.write('{0:40s}{1:d}\n'.format(key_names[4], purp))
+                f.write('{0:40s}{1:.2f}\n'.format(key_names[5], vot))
+                f.write('{0:40s}{1:d}\n'.format(key_names[6], occ))
+                f.write('{0:40s}{1:d}\n'.format(key_names[7], vtype))
+                f.write('\n')
+
+    print("Processed {0:d} matrices".format(matrix_count))

@@ -19,6 +19,7 @@ class Execution_Service():
     def __init__(self, name=None, control_file=None, required_keys=tuple(), acceptable_keys=tuple()):
         self.name = name
         self.keys = {}                                      # a dictionary for all keys {'key_name': key_object}
+        self.invalid_keys = []
         self.required_keys = required_keys                  # a tuple for all root-keys required
         self.acceptable_keys = self.common_keys + acceptable_keys              # a tuple for all root-keys acceptable
         self.acceptable_keys += self.required_keys
@@ -73,6 +74,12 @@ class Execution_Service():
         else:
             return key_value_pair[0], None
 
+    @staticmethod
+    def is_output_file(keyname):
+        if keyname.find('NEW') >= 0 and keyname.find('_FILE') >= 0:
+            return True
+        return False
+
     def initialize_execution(self):
         """
         Update the program properties based on key values
@@ -83,6 +90,10 @@ class Execution_Service():
         """
 
         # Populate the program properties
+        for ck in self.common_keys:
+            if ck not in self.keys:
+                self.keys[ck] = Key(key=ck)
+
         if self.keys['TITLE'].input_value:
             self.title = self.keys['TITLE'].input_value
         else:
@@ -130,15 +141,19 @@ class Execution_Service():
                     if line and not self.is_comment(line):
                         key, value = self.split_key_value(self.strip_comment(line))
                         key_type = Control_Key_Types.REQUIRED
-                        if key not in self.required_keys:
-                            key_type = Control_Key_Types.OPTIONAL
-                        key = Key(key=key, key_type=key_type, input_value=value)
-                        if key.key_group > self.highest_group:
-                            self.highest_group = key.key_group
-                        self.keys.update({key.key: key})
+                        root_key, _ = Key.get_root(key)
+                        if root_key not in KEY_DB:
+                            self.invalid_keys.append(key)
+                        else:
+                            if root_key not in self.required_keys:
+                                key_type = Control_Key_Types.OPTIONAL
+                            key = Key(key=key, key_type=key_type, input_value=value)
+                            self.keys.update({key.key: key})
+                            if key.key_group > self.highest_group:
+                                self.highest_group = key.key_group
 
     def update_key_value(self, key):
-        if key.input_value is not None:
+        if key.input_value is not None and key.key != 'INVALID_KEY':
             if key.value_type == Key_Value_Types.TIME_RANGE:
                 val = parse_time_range(key.input_value, self.logger)
                 if val[0][0] >= 0:
@@ -164,6 +179,10 @@ class Execution_Service():
         Populate all keys and check required key
         :return:
         """
+
+        # Print out invalid keys
+        for k in self.invalid_keys:
+            self.logger.warning('Invalid key found: %s' % k)
 
         single_keys = [k for k in self.acceptable_keys if KEY_DB[k].group_type == Key_Group_Types.NOGROUP]
         group_suffixes = ["_"+str(g) for g in range(1, self.highest_group+1)]
@@ -213,6 +232,18 @@ class Execution_Service():
             if not found:
                 self.logger.error("Required key %s not found" % check_key)
                 self.state = Codes_Execution_Status.ERROR
+
+        # Check existence for files
+        for k in self.keys.values():
+            if k.value_type == Key_Value_Types.FILE and k.key_type == Control_Key_Types.REQUIRED:
+                if self.is_output_file(k.key):
+                    if k.value and not os.path.exists(os.path.dirname(k.key)):
+                        self.state = Codes_Execution_Status.ERROR
+                        self.logger.error("Path %s for key %s does not exist" % (k.value, k.key))
+                else:
+                    if k.value and not os.path.exists(k.value):
+                        self.state = Codes_Execution_Status.ERROR
+                        self.logger.error("File %s for key %s does not exist" % (k.value, k.key))
 
     def print_keys(self):
         keys = [(k, v.input_value, v.key_order) for k, v in self.keys.items()]

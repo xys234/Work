@@ -47,23 +47,26 @@ class Key_Group_Types(IntEnum):
     NOGROUP = 0
     GROUP = 1
 
-
+# Output file always starts with "NEW_" and ends with "_FILE"
 Key_Info = namedtuple('Key_Info', ('value_type', 'value_default', 'group_type', 'key_order'))
 KEY_DB = {
         # Key                       # Value_Type                  # Value_Default
+
+        'INVALID_KEY':              Key_Info(Key_Value_Types.STRING,      None,              Key_Group_Types.NOGROUP, 0),
+        
         'TITLE':                    Key_Info(Key_Value_Types.STRING,      None,              Key_Group_Types.NOGROUP, 1),
-        'REPORT_FILE':              Key_Info(Key_Value_Types.FILE,      None,              Key_Group_Types.NOGROUP, 2),
+        'REPORT_FILE':              Key_Info(Key_Value_Types.FILE,        None,              Key_Group_Types.NOGROUP, 2),
         'PROJECT_DIRECTORY':        Key_Info(Key_Value_Types.STRING,      None,              Key_Group_Types.NOGROUP, 3),
         'RANDOM_SEED':              Key_Info(Key_Value_Types.INTEGER,     0,                 Key_Group_Types.NOGROUP, 4),
 
         'NUMBER_OF_ZONES':          Key_Info(Key_Value_Types.INTEGER,     None, Key_Group_Types.NOGROUP, 20),
-        'ORIGIN_FILE':              Key_Info(Key_Value_Types.FILE,      None, Key_Group_Types.NOGROUP, 21),
-        'VEHICLE_ROSTER_FILE':      Key_Info(Key_Value_Types.FILE,      None, Key_Group_Types.NOGROUP, 22),
+        'ORIGIN_FILE':              Key_Info(Key_Value_Types.FILE,        None, Key_Group_Types.NOGROUP, 21),
+        'NEW_VEHICLE_ROSTER_FILE':  Key_Info(Key_Value_Types.FILE,        None, Key_Group_Types.NOGROUP, 22),
 
-        'TRIP_TABLE_FILE':          Key_Info(Key_Value_Types.FILE,      None,                         Key_Group_Types.GROUP, 100),
+        'TRIP_TABLE_FILE':          Key_Info(Key_Value_Types.FILE,        None,                         Key_Group_Types.GROUP, 100),
         'MATRIX_NAME':              Key_Info(Key_Value_Types.STRING,      None,                         Key_Group_Types.GROUP, 101),
         'TIME_PERIOD_RANGE':        Key_Info(Key_Value_Types.TIME_RANGE,  "0..24",                      Key_Group_Types.GROUP, 102),
-        'DIURNAL_FILE':             Key_Info(Key_Value_Types.STRING,      None,                         Key_Group_Types.GROUP, 103),
+        'DIURNAL_FILE':             Key_Info(Key_Value_Types.FILE,      None,                         Key_Group_Types.GROUP, 103),
         'TRIP_PURPOSE_CODE':        Key_Info(Key_Value_Types.INTEGER,     1,                            Key_Group_Types.GROUP, 104),
         'VALUE_OF_TIME':            Key_Info(Key_Value_Types.FLOAT,       10.0,                         Key_Group_Types.GROUP, 105),
         'VEHICLE_CLASS':            Key_Info(Key_Value_Types.INTEGER,     Codes_Vehicle_Class.UE,       Key_Group_Types.GROUP, 106),

@@ -1,4 +1,7 @@
+import warnings
+warnings.simplefilter(action='ignore', category=FutureWarning)
 
+import os
 import time, h5py, numpy as np
 
 from services.sys_defs import *
@@ -6,11 +9,13 @@ from services.execution_service import Execution_Service
 from services.data_service import DTGenerator, read_diurnal_file, bucket_rounding
 from services.network_service import parse_origins
 
+
+
 class ConvertTrips(Execution_Service):
     required_keys = (
         'NUMBER_OF_ZONES',
         'ORIGIN_FILE',
-        'VEHICLE_ROSTER_FILE',
+        'NEW_VEHICLE_ROSTER_FILE',
         'TRIP_TABLE_FILE',
         'MATRIX_NAME',
         'TIME_PERIOD_RANGE',
@@ -35,8 +40,8 @@ class ConvertTrips(Execution_Service):
         'INITIAL_GAS'
     )
 
-    def __init__(self, name='ConvertTrips'):
-        super().__init__(name, ConvertTrips.required_keys, ConvertTrips.acceptable_keys)
+    def __init__(self, name='ConvertTrips', control_file='ConvertTrips.ctl'):
+        super().__init__(name, control_file, ConvertTrips.required_keys, ConvertTrips.acceptable_keys)
 
         # Module-specific data fields
         self.number_of_zones = None
@@ -236,11 +241,16 @@ class ConvertTrips(Execution_Service):
 
 
 if __name__ == '__main__':
-    import os
 
-    execution_path = "C:\Projects\Repo\Work\SWIFT\data"
-    control_file = "ConvertTrips.ctl"
-    control_file = os.path.join(execution_path, control_file)
-
-    exe = ConvertTrips()
-    exe.execute()
+    DEBUG = 1
+    if DEBUG == 1:
+        import os
+        execution_path = r"C:\Projects\Repo\Work\SWIFT\scripts\test\cases"
+        control_file = "ConvertTrips_4.ctl"
+        control_file = os.path.join(execution_path, control_file)
+        exe = ConvertTrips(control_file=control_file)
+        exe.execute()
+    else:
+        from sys import argv
+        exe = ConvertTrips(control_file=argv[1])
+        exe.execute()
