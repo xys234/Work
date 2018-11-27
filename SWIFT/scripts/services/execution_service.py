@@ -16,6 +16,9 @@ class Execution_Service():
         'TITLE', 'REPORT_FILE', 'PROJECT_DIRECTORY', 'RANDOM_SEED'
     )
 
+    OUTPUT_BUFFER = 20_000_000
+    INPUT_BUFFER = 10_000_000
+
     def __init__(self, name=None, control_file=None, required_keys=tuple(), acceptable_keys=tuple()):
         self.name = name
         self.keys = {}                                      # a dictionary for all keys {'key_name': key_object}
@@ -237,13 +240,13 @@ class Execution_Service():
         for k in self.keys.values():
             if k.value_type == Key_Value_Types.FILE and k.key_type == Control_Key_Types.REQUIRED:
                 if self.is_output_file(k.key):
-                    if k.value and not os.path.exists(os.path.dirname(k.key)):
+                    if k.value and not os.path.exists(os.path.dirname(k.value)):
                         self.state = Codes_Execution_Status.ERROR
-                        self.logger.error("Path %s for key %s does not exist" % (k.value, k.key))
+                        self.logger.error("Path %s for %s does not exist" % (os.path.dirname(k.value), k.key))
                 else:
                     if k.value and not os.path.exists(k.value):
                         self.state = Codes_Execution_Status.ERROR
-                        self.logger.error("File %s for key %s does not exist" % (k.value, k.key))
+                        self.logger.error("File %s for %s does not exist" % (k.value, k.key))
 
     def print_keys(self):
         keys = [(k, v.input_value, v.key_order) for k, v in self.keys.items()]

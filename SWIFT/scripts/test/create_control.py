@@ -166,18 +166,6 @@ if __name__ == '__main__':
             key_group = control_file_map[control_file_suffix]
 
 
-            common_keys = r'''
-                    TITLE                       {0:s}
-                    PROJECT_DIRECTORY           C:\Projects\Repo\Work\SWIFT\data\Dynus_T
-                    REPORT_FILE                 
-                    
-                    NUMBER_OF_ZONES             5263
-                    ORIGIN_FILE                 origin.dat
-                    NEW_VEHICLE_ROSTER_FILE     {1:s}
-            
-            '''.format(PURP_MAP[purp]+'_'+period.upper(), 'Vehicles_'+PURP_MAP[purp]+'_'+period.upper()+'.dat')
-
-
             with open(control_file, mode=mode) as f:
                 key_names = [k+'_'+str(key_group) for k in rotation_keys]
 
@@ -189,7 +177,7 @@ if __name__ == '__main__':
                     f.write('\n')
                     f.write("NUMBER_OF_ZONES             5263\n".format(PURP_MAP[purp] + '_' + period.upper()))
                     f.write("ORIGIN_FILE                 origin.dat\n".format(PURP_MAP[purp] + '_' + period.upper()))
-                    f.write("VEHICLE_ROSTER_FILE         {0:s}\n".format('Vehicles_'+PURP_MAP[purp]+'_'+period.upper()+'.dat'))
+                    f.write("NEW_VEHICLE_ROSTER_FILE     {0:s}\n".format('Vehicles_'+PURP_MAP[purp]+'_'+period.upper()+'.dat'))
                     f.write('\n')
                     f.write('\n')
 

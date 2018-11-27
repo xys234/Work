@@ -4,7 +4,7 @@ REPORT_FILE
 
 NUMBER_OF_ZONES             5263
 ORIGIN_FILE                 origin.dat
-VEHICLE_ROSTER_FILE         Vehicles_NHW_AM.dat
+NEW_VEHICLE_ROSTER_FILE     Vehicles_NHW_AM.dat
 
 
 TRIP_TABLE_FILE_1                       OD\2017\OD AM3HR NHB Vehicles.omx

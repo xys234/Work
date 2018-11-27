@@ -86,8 +86,8 @@ class ConvertTrips(Execution_Service):
             return
         if self.project_dir is not None:
             self.keys['ORIGIN_FILE'].value = os.path.join(self.project_dir, self.keys['ORIGIN_FILE'].value)
-            self.keys['VEHICLE_ROSTER_FILE'].value = \
-                os.path.join(self.project_dir, self.keys['VEHICLE_ROSTER_FILE'].value)
+            self.keys['NEW_VEHICLE_ROSTER_FILE'].value = \
+                os.path.join(self.project_dir, self.keys['NEW_VEHICLE_ROSTER_FILE'].value)
             for i in range(1, self.highest_group+1):
                 suffix = "_" + str(i)
                 self.keys['TRIP_TABLE_FILE'+suffix].value = \
@@ -111,7 +111,7 @@ class ConvertTrips(Execution_Service):
             self.number_of_zones = self.keys['NUMBER_OF_ZONES'].value
             self.origin_file = self.keys['ORIGIN_FILE'].value
             self.origins = parse_origins(self.origin_file, self.number_of_zones, self.logger)
-            self.vehicle_roster_file = self.keys['VEHICLE_ROSTER_FILE'].value
+            self.vehicle_roster_file = self.keys['NEW_VEHICLE_ROSTER_FILE'].value
 
         suffix = "_" + str(group)
         self.trip_table_file = self.keys['TRIP_TABLE_FILE'+suffix].value
@@ -193,7 +193,7 @@ class ConvertTrips(Execution_Service):
         open_mode = 'a'
         if self.vehicle_id == 1:
             open_mode = 'w'
-        with open(self.vehicle_roster_file, mode=open_mode, buffering=20_000_000) as f:
+        with open(self.vehicle_roster_file, mode=open_mode, buffering=super().OUTPUT_BUFFER) as f:
             for i, vals in enumerate(vehicle_pool):
                 vid = self.vehicle_id + i
                 data = (vid, *vals[:-2])
@@ -242,11 +242,11 @@ class ConvertTrips(Execution_Service):
 
 if __name__ == '__main__':
 
-    DEBUG = 1
+    DEBUG = 0
     if DEBUG == 1:
         import os
         execution_path = r"C:\Projects\Repo\Work\SWIFT\scripts\test\cases"
-        control_file = "ConvertTrips_4.ctl"
+        control_file = "ConvertTrips_OTHER_MD.ctl"
         control_file = os.path.join(execution_path, control_file)
         exe = ConvertTrips(control_file=control_file)
         exe.execute()
