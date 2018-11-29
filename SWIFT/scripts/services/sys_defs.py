@@ -65,11 +65,13 @@ KEY_DB = {
     'NUMBER_OF_ZONES':          Key_Info(Key_Value_Types.INTEGER,     None, Key_Group_Types.NOGROUP, 20),
     'ORIGIN_FILE':              Key_Info(Key_Value_Types.FILE,        None, Key_Group_Types.NOGROUP, 21),
     'NEW_VEHICLE_ROSTER_FILE':  Key_Info(Key_Value_Types.FILE,        None, Key_Group_Types.NOGROUP, 22),
+    'TRAJECTORY_FILE':          Key_Info(Key_Value_Types.FILE,        None, Key_Group_Types.NOGROUP, 23),
+    'NEW_TRAJECTORY_FILE':      Key_Info(Key_Value_Types.FILE,        None, Key_Group_Types.NOGROUP, 24),
 
     'TRIP_TABLE_FILE':          Key_Info(Key_Value_Types.FILE,        None,    Key_Group_Types.GROUP, 100),
     'MATRIX_NAME':              Key_Info(Key_Value_Types.STRING,      None,    Key_Group_Types.GROUP, 101),
     'TIME_PERIOD_RANGE':        Key_Info(Key_Value_Types.TIME_RANGE,  "0..24", Key_Group_Types.GROUP, 102),
-    'DIURNAL_FILE':             Key_Info(Key_Value_Types.FILE,      None,      Key_Group_Types.GROUP, 103),
+    'DIURNAL_FILE':             Key_Info(Key_Value_Types.FILE,        None,      Key_Group_Types.GROUP, 103),
     'TRIP_PURPOSE_CODE':        Key_Info(Key_Value_Types.INTEGER,     1,       Key_Group_Types.GROUP, 104),
     'VALUE_OF_TIME':            Key_Info(Key_Value_Types.FLOAT,       10.0,    Key_Group_Types.GROUP, 105),
     'VEHICLE_CLASS':            Key_Info(Key_Value_Types.INTEGER,     Codes_Vehicle_Class.UE, Key_Group_Types.GROUP, 106),
@@ -85,8 +87,9 @@ KEY_DB = {
     'ARRIVAL_TIME':             Key_Info(Key_Value_Types.FLOAT,       0.0,  Key_Group_Types.GROUP, 116),
     'WAIT_TIME':                Key_Info(Key_Value_Types.FLOAT,       0.0,  Key_Group_Types.GROUP, 117),
     'INITIAL_GAS':              Key_Info(Key_Value_Types.FLOAT,       0.0,  Key_Group_Types.GROUP, 118),
-    'VEHICLE_ROSTER_FILE':      Key_Info(Key_Value_Types.FILE, None, Key_Group_Types.GROUP, 119),
-    'START_TRIP_NUMBER':        Key_Info(Key_Value_Types.INTEGER,     1,    Key_Group_Types.NOGROUP, 120)
+    'VEHICLE_ROSTER_FILE':      Key_Info(Key_Value_Types.FILE,        None, Key_Group_Types.GROUP, 119),
+    'START_TRIP_NUMBER':        Key_Info(Key_Value_Types.INTEGER,     1,    Key_Group_Types.NOGROUP, 120),
+    'TRIP_PURPOSE_FIELD':       Key_Info(Key_Value_Types.STRING,      "Purpose",    Key_Group_Types.NOGROUP, 121)
 
 
 }
