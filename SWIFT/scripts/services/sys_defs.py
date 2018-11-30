@@ -23,7 +23,7 @@ class Codes_Vehicle_Class(IntEnum):
     # todo: Code checking and conversion
 
 
-class Codes_Vehicle_Occupancy(IntEnum):
+class Codes_Vehicle_Type(IntEnum):
     SOV = 0
     TRUCK = 1
     HOV = 2
@@ -41,6 +41,7 @@ class Key_Value_Types(IntEnum):
     STRING = 4
     TIME_RANGE = 5      # comma-delimited integer range like 0..6, 19..24 or 6..9
     FILE = 6
+    SET = 7             # comma-delimited integers, 1, 3, 4..5 or 1..3,
 
 
 class Key_Group_Types(IntEnum):
@@ -53,7 +54,7 @@ Key_Info = namedtuple('Key_Info', ('value_type', 'value_default', 'group_type', 
 
 
 KEY_DB = {
-    # Key                       # Value_Type                  # Value_Default
+    # Key                       # Value_Type                  # Default_input_value
 
     'INVALID_KEY':              Key_Info(Key_Value_Types.STRING,      None,              Key_Group_Types.NOGROUP, 0),
 
@@ -67,6 +68,7 @@ KEY_DB = {
     'NEW_VEHICLE_ROSTER_FILE':  Key_Info(Key_Value_Types.FILE,        None, Key_Group_Types.NOGROUP, 22),
     'TRAJECTORY_FILE':          Key_Info(Key_Value_Types.FILE,        None, Key_Group_Types.NOGROUP, 23),
     'NEW_TRAJECTORY_FILE':      Key_Info(Key_Value_Types.FILE,        None, Key_Group_Types.NOGROUP, 24),
+    'TRIP_ADJUSTMENT_FILE':     Key_Info(Key_Value_Types.FILE,        None, Key_Group_Types.NOGROUP, 25),
 
     'TRIP_TABLE_FILE':          Key_Info(Key_Value_Types.FILE,        None,    Key_Group_Types.GROUP, 100),
     'MATRIX_NAME':              Key_Info(Key_Value_Types.STRING,      None,    Key_Group_Types.GROUP, 101),
@@ -75,8 +77,8 @@ KEY_DB = {
     'TRIP_PURPOSE_CODE':        Key_Info(Key_Value_Types.INTEGER,     1,       Key_Group_Types.GROUP, 104),
     'VALUE_OF_TIME':            Key_Info(Key_Value_Types.FLOAT,       10.0,    Key_Group_Types.GROUP, 105),
     'VEHICLE_CLASS':            Key_Info(Key_Value_Types.INTEGER,     Codes_Vehicle_Class.UE, Key_Group_Types.GROUP, 106),
-    'VEHICLE_TYPE':             Key_Info(Key_Value_Types.INTEGER,     1,        Key_Group_Types.GROUP, 107),
-    'VEHICLE_OCCUPANCY':        Key_Info(Key_Value_Types.INTEGER,     Codes_Vehicle_Occupancy.SOV,  Key_Group_Types.GROUP, 108),
+    'VEHICLE_TYPE':             Key_Info(Key_Value_Types.INTEGER,     Codes_Vehicle_Type.SOV, Key_Group_Types.GROUP, 107),
+    'VEHICLE_OCCUPANCY':        Key_Info(Key_Value_Types.INTEGER,     1,  Key_Group_Types.GROUP, 108),
     'VEHICLE_GENERATION_MODE':  Key_Info(Key_Value_Types.INTEGER,     1,    Key_Group_Types.GROUP, 109),
     'INDIFFERENCE_BAND':        Key_Info(Key_Value_Types.FLOAT,       0.0,  Key_Group_Types.GROUP, 110),
     'NUMBER_OF_STOPS':          Key_Info(Key_Value_Types.INTEGER,     1,    Key_Group_Types.GROUP, 111),
@@ -89,7 +91,9 @@ KEY_DB = {
     'INITIAL_GAS':              Key_Info(Key_Value_Types.FLOAT,       0.0,  Key_Group_Types.GROUP, 118),
     'VEHICLE_ROSTER_FILE':      Key_Info(Key_Value_Types.FILE,        None, Key_Group_Types.GROUP, 119),
     'START_TRIP_NUMBER':        Key_Info(Key_Value_Types.INTEGER,     1,    Key_Group_Types.NOGROUP, 120),
-    'TRIP_PURPOSE_FIELD':       Key_Info(Key_Value_Types.STRING,      "Purpose",    Key_Group_Types.NOGROUP, 121)
+    'TRIP_PURPOSE_FIELD':       Key_Info(Key_Value_Types.STRING,      "PURPOSE",   Key_Group_Types.NOGROUP, 121),
+    'TRIP_ADJUSTMENT_FIELD':    Key_Info(Key_Value_Types.STRING,      "CHANGE",    Key_Group_Types.NOGROUP, 122),
+    'VEHICLE_TYPE_FIELD':       Key_Info(Key_Value_Types.STRING,      "VEHTYPE",    Key_Group_Types.NOGROUP, 123)
 
 
 }
