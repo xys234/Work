@@ -6,6 +6,24 @@ import textwrap
 # todo: Read in the adjustment file; Scan the trip file;
 
 
+def build_trip_index(trip_file):
+    """
+    Scan the trip file and build the trip index (O,D,Purpose,Occupancy,VehType) to [Veh IDs]
+    :param trip_file:
+    :return:
+    """
+
+    with open(trip_file, mode='r') as input_trip:
+        next(input_trip)
+        next(input_trip)  # skip the vehicle roster header
+        for line in input_trip:
+            data = line + next(input)
+            data = data.split()
+
+
+
+
+
 def build_vehicle_id_index(veh_trajectory_file):
     veh_id_pos_index = {}
     prev_pos, pos, veh_count, offset, prev_line = 0, 0, 0, 0, 0

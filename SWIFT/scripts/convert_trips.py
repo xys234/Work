@@ -73,6 +73,7 @@ class ConvertTrips(Execution_Service):
         self.diurnal_points = 600 * 24
 
         self.vehicle_id = 1
+        self.temp_vehicle = None
 
     def update_keys(self):
         """
@@ -94,7 +95,7 @@ class ConvertTrips(Execution_Service):
                     os.path.join(self.project_dir, self.keys['TRIP_TABLE_FILE'+suffix].value)
                 self.keys['DIURNAL_FILE'+suffix].value = \
                     os.path.join(self.project_dir, self.keys['DIURNAL_FILE'+suffix].value)
-
+            self.temp_vehicle = self.keys['NEW_VEHICLE_ROSTER_FILE'].value[:-4] + ".tmp"
 
     def initialize_internal_data(self, group=1):
         """
@@ -191,9 +192,9 @@ class ConvertTrips(Execution_Service):
 
         vid = self.vehicle_id
         open_mode = 'a'
-        if self.vehicle_id == 1:
+        if vid == 1:
             open_mode = 'w'
-        with open(self.vehicle_roster_file, mode=open_mode, buffering=super().OUTPUT_BUFFER) as f:
+        with open(self.temp_vehicle, mode=open_mode, buffering=super().OUTPUT_BUFFER) as f:
             for i, vals in enumerate(vehicle_pool):
                 vid = self.vehicle_id + i
                 data = (vid, *vals[:-2])
@@ -204,6 +205,16 @@ class ConvertTrips(Execution_Service):
 
         self.logger.info("Total vehicles converted                    = {0:d}".format(vid))
         self.vehicle_id = vid + 1
+
+    def add_vehicle_roster_header(self):
+        with open(self.vehicle_roster_file, mode='w', buffering=super().OUTPUT_BUFFER) as output_veh:
+            s = '%12d           1    # of vehicles in the file, Max # of STOPs\n' % (self.vehicle_id-1)
+            output_veh.write(s)
+            s = "        #   usec   dsec   stime vehcls vehtype ioc #ONode #IntDe info ribf    comp   izone Evac InitPos    VoT  tFlag pArrTime TP IniGas\n"
+            output_veh.write(s)
+            with open(self.temp_vehicle, mode='r') as input_veh:
+                for line in input_veh:
+                    output_veh.write(line)
 
     def execute(self):
         """
@@ -226,6 +237,9 @@ class ConvertTrips(Execution_Service):
                     vehicle_pool = self.to_vehicles()
                     self.write_vehicles(vehicle_pool)
                     self.logger.info("Matrix Converted in %.2f minutes" % ((time.time()-matrix_conversion_start_time)/60))
+            self.add_vehicle_roster_header()
+        if os.path.exists(self.temp_vehicle):
+            os.remove(self.temp_vehicle)
 
         end_time = time.time()
         execution_time = (end_time-start_time)/60.0
@@ -242,7 +256,7 @@ class ConvertTrips(Execution_Service):
 
 if __name__ == '__main__':
 
-    DEBUG = 0
+    DEBUG = 1
     if DEBUG == 1:
         import os
         execution_path = r"C:\Projects\Repo\Work\SWIFT\scripts\test\cases"
