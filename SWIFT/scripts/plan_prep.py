@@ -14,7 +14,8 @@ class PlanPrep(Execution_Service):
         'TRIP_ADJUSTMENT_FIELD',
     )
     acceptable_keys = (
-
+        'NEW_VEHICLE_MAP_FILE',         # New ID -> Old ID
+        'NEW_VEHICLE_MAP_FILE'
 
     )
 

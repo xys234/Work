@@ -52,13 +52,27 @@ def build_vehicle_id_index(veh_trajectory_file):
     return veh_id_pos_index
 
 
-def build_vehicle_adj_list(path_adjustment_file, trip_index, start_id):
+def build_vehicle_adj_list(path_adjustment_file, trip_index, start_id,
+                           origin_field='O',
+                           dest_field='D',
+                           vehtype_field='VEHTYPE',
+                           purpose_field='PURPOSE',
+                           occ_field='OCCUPANCY',
+                           change_field='CHANGE',
+                           ):
     """
 
     :param path_adjustment_file:
     :param trip_index:
     :param start_id:
+    :param origin_field:
+    :param dest_field:
+    :param vehtype_field:
+    :param purpose_field:
+    :param occ_field:
+    :param change_field:
     :return:
+
 
     Additions are the first block followed by the deletions.
     New_ID    Old_ID
@@ -68,14 +82,29 @@ def build_vehicle_adj_list(path_adjustment_file, trip_index, start_id):
     -67       -67
 
     """
+
+   
     deletions = []
     adj_list = []
     invalid_adj = []        # a list of records in str
     with open(path_adjustment_file, mode='r') as input_adj:
-        next(input_adj)     # skip the header
+        header = next(input_adj).strip().split()     # parse the header
+        origin_field_ind = header.index(origin_field)
+        dest_field_ind = header.index(dest_field)
+        vehtype_field_ind = header.index(vehtype_field)
+        purpose_field_ind = header.index(purpose_field)
+        occ_field_ind = header.index(occ_field)
+        change_field_ind = header.index(change_field)
+
         for line in input_adj:
             data = list(map(int, line.strip().split()))
-            key, operation = tuple(data[:-1]), data[-1]
+            key, operation = (
+                                    data[origin_field_ind],
+                                    data[dest_field_ind],
+                                    data[purpose_field_ind],
+                                    data[occ_field_ind],
+                                    data[vehtype_field_ind],
+                                   ), data[change_field_ind]
             if key not in trip_index:
                 invalid_adj.append(data.append("INVALID_COMBINATION"))
             else:
@@ -107,7 +136,7 @@ def write_trajectories(veh_trajectory_file, vehicle_id_index, adj_list, output):
 
     :param veh_trajectory_file:
     :param vehicle_id_index:
-    :param adj_list: a list of vehicle ids. Negative id means deletion
+    :param adj_list: a list of tuples (new_id, old_id). Negative new_id means deletion
     :return:
     """
     VEHICLE_ID_FIELD_LENGTH = 14
@@ -116,15 +145,14 @@ def write_trajectories(veh_trajectory_file, vehicle_id_index, adj_list, output):
     ids = set()
     with open(veh_trajectory_file, mode='r') as input_veh:
         with open(output, mode='w') as out:
-            for v in adj_list:
-                if v > 0:
-                    start_pos, offset = vehicle_id_index[v]
+            for new_id, old_id in adj_list:
+                if new_id > 0:
+                    start_pos, offset = vehicle_id_index[old_id]
                     input_veh.seek(start_pos)
                     record = input_veh.read(offset)
-                    if v not in ids:
-                        ids.add(v)
-                        # add the original trajectory
-                        out.write(record)
+                    if old_id not in ids:
+                        ids.add(old_id)
+                        out.write(record)   # add the original trajectory
                     new_veh_id_field = VEHICLE_FIELD_HEADER + str(start_new_id).rjust(9)
                     record = new_veh_id_field + record[VEHICLE_ID_FIELD_LENGTH:]
                     out.write(record)
