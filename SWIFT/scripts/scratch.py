@@ -8,7 +8,7 @@ import random
 
 def build_trip_index(trip_file):
     """
-    Scan the trip file and build the trip index (O,D,Purpose,Occupancy,VehType) to [Veh IDs]
+    Scan the trip file and build the trip index (O,D,Purpose,Occupancy,VehType,Period,Income) to [Veh IDs]
     :param trip_file:
     :return:
     """
@@ -21,7 +21,10 @@ def build_trip_index(trip_file):
         for line in input_trip:
             data = line + next(input_trip)
             data = data.strip().split()
-            vid, o, d, purp, occ, vehtype = int(data[0]), int(data[12]), int(data[20]), int(data[18]), int(data[6]), int(data[5])
+            dtime = float(data[3])
+            vot = float(data[15])
+            vid, o, d, purp, occ, vehtype = \
+                int(data[0]), int(data[12]), int(data[20]), int(data[18]), int(data[6]), int(data[5])
             key = (o, d, purp, occ, vehtype)
             if key not in trip_index:
                 trip_index[key] = [vid]
