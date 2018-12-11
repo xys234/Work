@@ -8,7 +8,7 @@ http://nealhughes.net/cython1/
 import time
 from math import exp
 import numpy as np
-
+from fastloop import rbf_network
 
 def timeit(func):
     def f(*args, **kwargs):
@@ -16,13 +16,13 @@ def timeit(func):
         start_time = time.time()
         rv = func(*args, **kwargs)
         end_time = time.time()
-        print("Execution time = {0:.0f} sec".format(end_time-start_time))
+        print("Execution time = {0:.4f} sec".format(end_time-start_time))
         return rv
     return f
 
 
 @timeit
-def rbf_network(X, beta, theta):
+def rbf_network_py(X, beta, theta):
 
     N = X.shape[0]
     D = X.shape[1]
@@ -39,6 +39,16 @@ def rbf_network(X, beta, theta):
     return Y
 
 
+# def read_file_with_tqdm(file):
+#     with open(file, mode='r') as input_file:
+#         for i, line in enumerate(input_file):
+#             count = i
+#             if i > 0 and i % 100 == 0:
+#                 sys.stdout.write("\rRead origin file -- %i" % i)
+#                 sys.stdout.flush()
+
+
+
 
 if __name__ == '__main__':
     D = 5
@@ -46,4 +56,11 @@ if __name__ == '__main__':
     X = np.array([np.random.rand(N) for d in range(D)]).T
     beta = np.random.rand(N)
     theta = 10
-    rbf_network(X, beta, theta)
+
+    rbf_network_py(X, beta, theta)
+
+    start_time = time.time()
+    y = rbf_network(X, beta, theta)
+    end_time = time.time()
+    print("For Cython - Elapsed {0:.4f} seconds".format(end_time-start_time))
+
