@@ -91,11 +91,9 @@ KEY_DB = {
     'INITIAL_GAS':              Key_Info(Key_Value_Types.FLOAT,       0.0,  Key_Group_Types.GROUP, 118),
     'VEHICLE_ROSTER_FILE':      Key_Info(Key_Value_Types.FILE,        None, Key_Group_Types.GROUP, 119),
     'START_TRIP_NUMBER':        Key_Info(Key_Value_Types.INTEGER,     1,    Key_Group_Types.NOGROUP, 120),
-    'TRIP_PURPOSE_FIELD':       Key_Info(Key_Value_Types.STRING,      "PURPOSE",   Key_Group_Types.NOGROUP, 121),
-    'TRIP_ADJUSTMENT_FIELD':    Key_Info(Key_Value_Types.STRING,      "CHANGE",    Key_Group_Types.NOGROUP, 122),
-    'VEHICLE_TYPE_FIELD':       Key_Info(Key_Value_Types.STRING,      "VEHTYPE",    Key_Group_Types.NOGROUP, 123)
-
-
+    'PERIOD_MAP_FILE':          Key_Info(Key_Value_Types.FILE,        None, Key_Group_Types.NOGROUP, 121),
+    'INCOME_MAP_FILE':          Key_Info(Key_Value_Types.FILE,        None, Key_Group_Types.NOGROUP, 122),
+    'ZONE_MAP_FILE':            Key_Info(Key_Value_Types.FILE,        None, Key_Group_Types.NOGROUP, 123),
 }
 if __name__ == '__main__':
     pass

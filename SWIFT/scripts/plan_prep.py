@@ -1,6 +1,7 @@
 import time
 import os
 import random
+import struct
 
 from services.sys_defs import *
 from services.execution_service import Execution_Service
@@ -12,24 +13,34 @@ class PlanPrep(Execution_Service):
     PERIOD_MAP_FILE_HEADER = ('PERIOD', 'START', 'END')
     INCOME_MAP_FILE_HEADER = ('INCOME', 'LOW', 'HIGH')
 
+    HEADER_PACKING_FMT = "=ibhhbiiiiffibbfbfhff"
+
     required_keys = (
         'TRAJECTORY_FILE',
         'TRAJECTORY_FORMAT',
         'NEW_TRAJECTORY_FILE',
         'NEW_TRAJECTORY_FORMAT',
-        'VEHICLE_ROSTER_FILE',
-        'TRIP_ADJUSTMENT_FILE',
-        'PERIOD_FILED',
-        'INCOME_FIELD',
-        'PERIOD_MAP_FILE',
-        'INCOME_MAP_FILE',
 
     )
     acceptable_keys = (
+        'TRIP_ADJUSTMENT_FILE',
         'ZONE_MAP_FILE',
+        'VEHICLE_ROSTER_FILE',
+        'PERIOD_MAP_FILE',
+        'INCOME_MAP_FILE',
         'NEW_VEHICLE_MAP_FILE',         # New ID -> Old ID
 
+    )
 
+    file_keys = (
+        'TRAJECTORY_FILE',
+        'NEW_TRAJECTORY_FILE',
+        'VEHICLE_ROSTER_FILE',
+        'TRIP_ADJUSTMENT_FILE',
+        'PERIOD_MAP_FILE',
+        'INCOME_MAP_FILE',
+        'ZONE_MAP_FILE',
+        'NEW_VEHICLE_MAP_FILE'
     )
 
     def __init__(self, name='PlanPrep', control_file='PlanPrep.ctl'):
@@ -37,10 +48,13 @@ class PlanPrep(Execution_Service):
 
         self.vehicle_roster_file = None
         self.input_trajectory_file = None
-        self.trajectory_file = None
+        self.input_trajectory_format = None
+        self.new_trajectory_file = None
+        self.new_trajectory_format = None
         self.trip_adjustment_file = None
         self.period_map_file = None
         self.vot_map_file = None
+        self.zone_map_file = None
 
         self.trip_adjustment_map = None       # {(O, D, Purpose, VehType): Change}
         self.trip_index = None
@@ -57,15 +71,42 @@ class PlanPrep(Execution_Service):
     def update_keys(self):
         if self.state == Codes_Execution_Status.ERROR:
             return
-        pass
+        if self.project_dir is not None:
+            for k in self.file_keys:
+                if KEY_DB[k].group_type == Key_Group_Types.GROUP:
+                    for g in range(self.highest_group):
+                        if self.keys[k+"_"+str(g)].value:
+                            self.keys[k+"_"+str(g)].value = os.path.join(self.project_dir, self.keys[k+"_"+str(g)].value)
+                else:
+                    if self.keys[k].value:
+                        self.keys[k].value = os.path.join(self.project_dir, self.keys[k].value)
 
     def initialize_internal_data(self):
-
         self.input_trajectory_file = self.keys['TRAJECTORY_FILE'].value
-        self.trajectory_file = self.keys['NEW_TRAJECTORY_FILE'].value
+        self.input_trajectory_format = self.keys['TRAJECTORY_FORMAT'].value
+        self.new_trajectory_file = self.keys['NEW_TRAJECTORY_FILE'].value
+        self.new_trajectory_format = self.keys['NEW_TRAJECTORY_FORMAT'].value
         self.trip_adjustment_file = self.keys['TRIP_ADJUSTMENT_FILE'].value
+        self.vehicle_roster_file = self.keys['VEHICLE_ROSTER_FILE_'+str(self.highest_group)].value
 
-        # read in the trip adjustment file
+        self.period_map_file = self.keys['PERIOD_MAP_FILE'].value
+        self.vot_map_file = self.keys['INCOME_MAP_FILE'].value
+        self.zone_map_file = self.keys['ZONE_MAP_FILE'].value
+
+        # Check key logic
+        if self.new_trajectory_format != 'BINARY':
+            self.new_trajectory_format = 'TEXT'
+
+        if self.trip_adjustment_file:
+            if self.period_map_file is None:
+                self.state = Codes_Execution_Status.ERROR
+                self.logger.error("Period map file is required for trajectory adjustment")
+            if self.vot_map_file is None:
+                self.state = Codes_Execution_Status.ERROR
+                self.logger.error("Income map file is required for trajectory adjustment")
+            if self.vehicle_roster_file is None:
+                self.state = Codes_Execution_Status.ERROR
+                self.logger.error("Input vehicle roster file is required for trajectory adjustment")
 
     def read_trip_adjustment_file(self):
         """
@@ -266,9 +307,58 @@ class PlanPrep(Execution_Service):
         :return:
         """
 
+        if self.input_trajectory_format == 'BINARY' and self.new_trajectory_format == 'TEXT':
+            with open(file=self.input_trajectory_file, mode='rb') as input_trajectories:
+                with open(file=self.new_trajectory_file, mode='w', buffering=super().OUTPUT_BUFFER) as output_trajectories:
+                    eof = False
+                    while not eof:
+                        data = input_trajectories.read(struct.calcsize(self.HEADER_PACKING_FMT))
+                        if not data:
+                            eof = True
+                        else:
+                            try:
+                                data = struct.unpack(self.HEADER_PACKING_FMT, data)
+                            except struct.error:
+                                self.status = Codes_Execution_Status.ERROR
+                                self.logger.error("Error in reading binary trajectory file")
+                                eof = True
+                            if self.status == Codes_Execution_Status.OK:
+                                record = "Veh #{0:9d} Tag={1:2d} OrigZ={2:5d} DestZ={3:5d} Class={4:2d} Tck/HOV={5:2d} UstmN={6:7d} " \
+                                         "DownN={7:7d} DestN={8:7d} STime={9:8.2f} Total Travel Time={10:8.2f} # of Nodes={11:4d} " \
+                                         "VehType{12:2d} EVAC{13:2d} VOT{14:8.2f} tFlag{15:2d} PrefArrTime{16:7.1f} " \
+                                         "TripPur{17:4d} IniGas{18:5.1f} " \
+                                         "Toll{19:6.1f}\n".format(*data)
+                                output_trajectories.write(record)
 
+                                # Processed the nested data
+                                tag, number_nodes = data[1], data[11]
+                                if tag != 2:
+                                    number_nodes -= 1
 
+                                fmt_nodes = str(number_nodes) + 'i'
+                                fmt_times = str(number_nodes) + 'f'
+                                fmt_delays = str(number_nodes) + 'f'
+                                fmt_tolls = str(number_nodes) + 'f'
 
+                                data = input_trajectories.read(struct.calcsize(fmt_nodes))
+                                data = struct.unpack(fmt_nodes, data)
+                                record = "{:8d}{:8d}{:8d}{:8d}".format(*data)
+                                output_trajectories.write(record)
+
+                                data = input_trajectories.read(struct.calcsize(fmt_times))
+                                data = struct.unpack(fmt_times, data)
+                                record = "{:8f}{:8f}{:8f}{:8f}".format(*data)
+                                output_trajectories.write(record)
+
+                                data = input_trajectories.read(struct.calcsize(fmt_delays))
+                                data = struct.unpack(fmt_delays, data)
+                                record = "{:8f}{:8f}{:8f}{:8f}".format(*data)
+                                output_trajectories.write(record)
+
+                                data = input_trajectories.read(struct.calcsize(fmt_tolls))
+                                data = struct.unpack(fmt_tolls, data)
+                                record = "{:8f}{:8f}{:8f}{:8f}".format(*data)
+                                output_trajectories.write(record)
 
     def execute(self):
         super().execute()
@@ -292,3 +382,19 @@ class PlanPrep(Execution_Service):
             self.logger.info("Total trips duplicated            = {0:d}".format(self.trip_count_added))
             self.logger.info("Total trips deleted               = {0:d}".format(self.trip_count_deleted))
             self.logger.info("Execution completed in %.2f minutes" % execution_time)
+
+
+if __name__ == '__main__':
+
+    DEBUG = 1
+    if DEBUG == 1:
+        import os
+        execution_path = r"C:\Projects\Repo\Work\SWIFT\scripts\test\cases"
+        control_file = "ConvertTrips_OTHER_MD.ctl"
+        control_file = os.path.join(execution_path, control_file)
+        exe = PlanPrep(control_file=control_file)
+        exe.execute()
+    else:
+        from sys import argv
+        exe = PlanPrep(control_file=argv[1])
+        exe.execute()

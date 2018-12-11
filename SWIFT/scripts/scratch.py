@@ -1,6 +1,7 @@
 import os
 import sys
 import random
+import struct
 
 # seeking position considers return as 2 chars
 # read position considers return as 1 char
@@ -161,10 +162,30 @@ def write_trajectories(veh_trajectory_file, vehicle_id_index, adj_list, output):
                     out.write(record)
                     start_new_id += 1
 
-def read_binary_trajectories(vehicle_trajectory_file, output):
-    with open(file=vehicle_trajectory_file, mode='b') as input_trajectories:
+
+def read_binary_trajectories(vehicle_trajectory_file_binary, vehicle_trajectory_file_text, output):
+    vid = 0
+    header_record_size = 59
+    packing_format = "=ibhhbiiiiffibbfbfhff"
+    with open(file=vehicle_trajectory_file_binary, mode='rb') as input_trajectories:
         with open(file=output, mode='w', buffering=10_000) as output_trajectories:
-            pass
+            data = input_trajectories.read(header_record_size)
+            data = struct.unpack(packing_format, data)
+            vid = data[0]
+            record = "Veh #{0:9d} Tag={1:2d} OrigZ={2:5d} DestZ={3:5d} Class={4:2d} Tck/HOV={5:2d} UstmN={6:7d} " \
+                     "DownN={7:7d} DestN={8:7d} STime={9:8.2f} Total Travel Time={10:8.2f} # of Nodes={11:4d} " \
+                     "VehType{12:2d} EVAC{13:2d} VOT{14:8.2f} tFlag{15:2d} PrefArrTime{16:7.1f} " \
+                     "TripPur{17:4d} IniGas{18:5.1f} " \
+                     "Toll{19:6.1f}\n".format(*data)
+            output_trajectories.write(record)
+
+
+    # with open(file=vehicle_trajectory_file_text, mode='r') as input_trajectories:
+    #     with open(file=output, mode='a', buffering=10_000) as output_trajectories:
+    #         for line in input_trajectories:
+    #             if line.startswith("Veh #{0:9d}".format(vid)):
+    #                 output_trajectories.write(line)
+    #                 break
 
 def wrap_list(lst, items_per_line=5):
     lines = []
@@ -178,14 +199,15 @@ def wrap_list(lst, items_per_line=5):
 if __name__ == '__main__':
 
     data_dir = r'C:\Projects\Repo\Work\SWIFT\data\Dynus_T'
-    veh_trajectory_file = 'VehTrajectory.dat'
-    # veh_trajectory_file = 'input.dat'
-    out_file = 'test.dat'
-    veh_trajectory_file = os.path.join(data_dir, veh_trajectory_file)
-    out_file = os.path.join(data_dir, out_file)
-    vehicle_roster_file = 'Vehicles_HNW_AM_with_Header.dat'
-    vehicle_roster_file = os.path.join(data_dir, vehicle_roster_file)
+    veh_trajectory_file_binary = r'Calibrated\VehTrajectory.itf'
+    veh_trajectory_file_text = r'Calibrated\VehTrajectory.dat'
+    veh_trajectory_file_binary = os.path.join(data_dir, veh_trajectory_file_binary)
+    veh_trajectory_file_text = os.path.join(data_dir, veh_trajectory_file_text)
 
+    out_file = 'test.dat'
+    out_file = os.path.join(data_dir, out_file)
+
+    read_binary_trajectories(veh_trajectory_file_binary, veh_trajectory_file_text, out_file)
 
     # with open(veh_trajectory_file, mode='r') as f:
     #     pos = 0
@@ -208,6 +230,6 @@ if __name__ == '__main__':
     # write_trajectories(veh_trajectory_file, veh_id_pos_index, adj_list, out_file)
 
 
-    trip_index, trip_count = build_trip_index(vehicle_roster_file)
-    print("{0:d} Trips processed".format(trip_count))
-    print(sys.getsizeof(trip_index) / 1024576.0)
+    # trip_index, trip_count = build_trip_index(vehicle_roster_file)
+    # print("{0:d} Trips processed".format(trip_count))
+    # print(sys.getsizeof(trip_index) / 1024576.0)

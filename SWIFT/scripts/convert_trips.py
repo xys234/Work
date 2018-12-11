@@ -253,7 +253,6 @@ class ConvertTrips(Execution_Service):
             self.logger.info("Execution completed in %.2f minutes" % execution_time)
 
 
-
 if __name__ == '__main__':
 
     DEBUG = 1
