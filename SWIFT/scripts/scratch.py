@@ -161,6 +161,10 @@ def write_trajectories(veh_trajectory_file, vehicle_id_index, adj_list, output):
                     out.write(record)
                     start_new_id += 1
 
+def read_binary_trajectories(vehicle_trajectory_file, output):
+    with open(file=vehicle_trajectory_file, mode='b') as input_trajectories:
+        with open(file=output, mode='w', buffering=10_000) as output_trajectories:
+            pass
 
 def wrap_list(lst, items_per_line=5):
     lines = []
