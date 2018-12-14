@@ -2,6 +2,7 @@ import time
 import random
 import struct
 import sys
+import os
 
 from services.sys_defs import *
 from services.execution_service import Execution_Service
@@ -301,15 +302,15 @@ class PlanPrep(Execution_Service):
             self.state = Codes_Execution_Status.ERROR
             self.logger.error("Input trajectory file must be binary for trip adjustment")
         else:
-            pos, record_length = 0, 0
+            self.vehicle_trajectory_index = {}
             veh_count = 0
             with open(file=self.input_trajectory_file, mode='rb') as input_trajectories:
                 eof = False
+                pos, record_length = 0, 0
                 while not eof:
                     read_size = struct.calcsize(self.HEADER_PACKING_FMT)
                     record_length += read_size
                     data = input_trajectories.read(read_size)
-                    pos = input_trajectories.tell()
                     if not data:
                         eof = True
                     else:
@@ -322,18 +323,16 @@ class PlanPrep(Execution_Service):
                         if self.state == Codes_Execution_Status.OK:
                             veh_count += 1
                             vid, tag, numnodes, toll = data[0], data[1], data[11], data[19]
-                            if tag == 2:
-                                # header(4i) + node_seq; header+cumu_time_seq(4f); header+time_seq; header+delay_seq
-                                record_length += 4*(4+numnodes*4)
-                                if toll > 0:
-                                    record_length += (numnodes-1)*4
-                                pos += record_length
-                            else:
-                                skip_size = 4+numnodes*4
-                                pos += skip_size
+                            nested_record_size, _ = self.calc_read_size(numnodes, tag, toll)
+                            record_length += nested_record_size
                             self.vehicle_trajectory_index[vid] = (pos, record_length)
+                            pos += record_length
                             input_trajectories.seek(pos)
                             record_length = 0
+                            sys.stdout.write("\rNumber of Vehicles Read = {:,d}".format(veh_count))
+            sys.stdout.write("\n")
+            self.logger.info("Number of Vehicles Read = {:,d}".format(veh_count))
+
 
     def write_trajectories(self):
         """
@@ -344,19 +343,77 @@ class PlanPrep(Execution_Service):
         pass
 
     @staticmethod
-    def parse_nested_sequences(byte_record):
+    def parse_nested_sequences(byte_record, numnodes, time_records=True, read_toll=True):
         """
         Parse the byte sequence for nested trajectory information
         :param byte_record:
-        :type bytearray
+        :param numnodes:
+        :param time_records:
+        :param read_toll:
         :return: tuples of nodes, cumulative times, link times, delays, and tolls if any
+
         """
 
-        #TODO:
-        if isinstance(byte_record, bytearray):
-            pass
+        pos = 0
+        nodes, cumu_times, times, delays, tolls = None, None, None, None, None
+        if isinstance(byte_record, bytes):
+            size_seq = struct.unpack("i", byte_record[pos:pos+4])[0]
+            pos += 4
+            fmt = str(size_seq) + 'i'
+            end_pos = pos+4*numnodes
+            nodes = struct.unpack(fmt, byte_record[pos:end_pos])
+            pos = end_pos
+
+            if time_records:
+                # cumulative time
+                size_seq = struct.unpack("i", byte_record[pos:pos+4])[0]
+                pos += 4
+                fmt = str(size_seq) + 'f'
+                end_pos = pos + 4 * size_seq
+                cumu_times = struct.unpack(fmt, byte_record[pos:end_pos])
+                pos = end_pos
+
+                # link time
+                size_seq = struct.unpack("i", byte_record[pos:pos+4])[0]
+                pos += 4
+                fmt = str(size_seq) + 'f'
+                end_pos = pos + 4 * size_seq
+                times = struct.unpack(fmt, byte_record[pos:end_pos])
+                pos = end_pos
+
+                # delay
+                size_seq = struct.unpack("i", byte_record[pos:pos+4])[0]
+                pos += 4
+                fmt = str(size_seq) + 'f'
+                end_pos = pos + 4 * size_seq
+                delays = struct.unpack(fmt, byte_record[pos:end_pos])
+                pos = end_pos
+
+                if read_toll > 0:
+                    fmt = str(size_seq) + 'f'
+                    end_pos = pos + 4 * numnodes
+                    tolls = struct.unpack(fmt, byte_record[pos:end_pos])
+            return nodes, cumu_times, times, delays, tolls
         else:
             raise TypeError("Input must be bytes")
+
+    @staticmethod
+    def calc_read_size(numnodes, tag, toll):
+        bytes_to_read = 4 + 4 * numnodes  # node sequence always the same
+        flag_for_time_records = True
+        if numnodes == tag == 1:
+            flag_for_time_records = False
+        if flag_for_time_records:
+            if tag == 2:
+                bytes_to_read += 3 * (4 + 4 * numnodes)
+            elif tag == 1:
+                bytes_to_read += 3 * (4 + 4 * (numnodes - 1))
+        if toll > 0:
+            if tag == 2:
+                bytes_to_read += 4 * numnodes
+            elif tag == 1:
+                bytes_to_read += 4 * (numnodes - 1)
+        return bytes_to_read, flag_for_time_records
 
     def convert_trajectories(self):
         """
@@ -387,58 +444,44 @@ class PlanPrep(Execution_Service):
                                      "Toll{19:6.1f}\n".format(*data)
                             output_trajectories.write(record)
                             veh_count += 1
-                            sys.stdout.write("\rNumber of Vehicles Read = {:d}".format(veh_count))
+                            sys.stdout.write("\rNumber of Vehicles Read = {:,d}".format(veh_count))
                             # Processed the nested data
                             tag, numnodes, toll = data[1], data[11], data[19]
+                            bytes_to_read, flag_for_time_records = self.calc_read_size(numnodes, tag, toll)
+
+                            bytes_record = input_trajectories.read(bytes_to_read)
+                            nodes, cumulative_times, times, delays, tolls = \
+                                self.parse_nested_sequences(bytes_record, numnodes, flag_for_time_records, toll > 0)
 
                             # node sequence
-                            size_seq = struct.unpack("i", input_trajectories.read(4))[0]
-                            fmt = str(size_seq) + 'i'
-                            template = "{:8d}"*size_seq+"\n"
-                            data = input_trajectories.read(struct.calcsize(fmt))
-                            data = struct.unpack(fmt, data)
-                            record = template.format(*data)
+                            template = "{:8d}"*numnodes+"\n"
+                            record = template.format(*nodes)
                             output_trajectories.write(record)
 
-                            flag_for_time_records = True
-                            if numnodes == tag == 1:
-                                flag_for_time_records = False
-
                             if flag_for_time_records:
+                                if tag == 1:
+                                    numnodes -= 1
                                 # cumulative time
-                                size_seq = struct.unpack("i", input_trajectories.read(4))[0]
-                                fmt = str(size_seq) + 'f'
-                                template = "{:8.2f}"*size_seq+"\n"
-                                data = input_trajectories.read(struct.calcsize(fmt))
-                                data = struct.unpack(fmt, data)
-                                record = template.format(*data)
+                                template = "{:8.2f}"*numnodes+"\n"
+                                record = template.format(*cumulative_times)
                                 output_trajectories.write(record)
 
                                 # link time
-                                size_seq = struct.unpack("i", input_trajectories.read(4))[0]
-                                fmt = str(size_seq) + 'f'
-                                template = "{:8.2f}"*size_seq+"\n"
-                                data = input_trajectories.read(struct.calcsize(fmt))
-                                data = struct.unpack(fmt, data)
-                                record = template.format(*data)
+                                template = "{:8.2f}"*numnodes+"\n"
+                                record = template.format(*times)
                                 output_trajectories.write(record)
 
                                 # delay
-                                size_seq = struct.unpack("i", input_trajectories.read(4))[0]
-                                fmt = str(size_seq) + 'f'
-                                template = "{:8.2f}"*size_seq+"\n"
-                                data = input_trajectories.read(struct.calcsize(fmt))
-                                data = struct.unpack(fmt, data)
-                                record = template.format(*data)
+                                template = "{:8.2f}"*numnodes+"\n"
+                                record = template.format(*delays)
                                 output_trajectories.write(record)
 
                                 if toll > 0:
-                                    fmt = str(size_seq) + 'f'
-                                    template = "{:8.2f}" * size_seq + "\n"
-                                    data = input_trajectories.read(struct.calcsize(fmt))
-                                    data = struct.unpack(fmt, data)
-                                    record = template.format(*data)
+                                    template = "{:8.2f}" * numnodes + "\n"
+                                    record = template.format(*tolls)
                                     output_trajectories.write(record)
+                        # if veh_count == 13:
+                        #     eof = True
         self.logger.info("Number of Vehicles Read = {:d}".format(veh_count))
         sys.stdout.write("\n")
 
@@ -460,7 +503,7 @@ class PlanPrep(Execution_Service):
                 if self.input_trajectory_format == 'BINARY' and self.new_trajectory_format == 'TEXT':
                     self.convert_trajectories()
             else:
-                print("Do trajectory manipulation")
+                self.build_vehicle_id_index()
 
         end_time = time.time()
         execution_time = (end_time - start_time) / 60.0
@@ -482,7 +525,7 @@ if __name__ == '__main__':
     if DEBUG == 1:
         import os
         execution_path = r"C:\Projects\Repo\Work\SWIFT\scripts\test\cases"
-        control_file = "PlanPrep_AdjustTrips.ctl"
+        control_file = "PlanPrep_Test_Trajectory_Index.ctl"
         control_file = os.path.join(execution_path, control_file)
         exe = PlanPrep(control_file=control_file)
         exe.execute()

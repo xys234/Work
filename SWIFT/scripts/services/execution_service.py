@@ -56,9 +56,13 @@ class Execution_Service():
         :param line: a string with comments at the end. Comments symbols not at the beginning
         :return:
         """
+        loc_pound_sign = line.find("##")
+        loc_slash_sign = line.find("//")
 
-        if line.find("##") >= 0:
-            return line[:line.find("##")]
+        if loc_pound_sign >= 0:
+            return line[:loc_pound_sign]
+        elif loc_slash_sign >= 0:
+            return line[:loc_slash_sign]
         else:
             return line
 

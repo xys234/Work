@@ -216,7 +216,7 @@ if __name__ == '__main__':
         # print(input_trajectories.tell())
 
         # input_trajectories.seek(77373827+59+4+4*1)    # incomplete record???
-        input_trajectories.seek(77671683+4)
+        input_trajectories.seek(1311-59)
         data = input_trajectories.read(4)
         # data_unpack = struct.unpack(packing_format, data)
         data_unpack = struct.unpack("i", data)
