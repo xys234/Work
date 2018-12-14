@@ -1,6 +1,5 @@
 
 import re
-import time
 import os
 import itertools
 
@@ -265,7 +264,7 @@ class Execution_Service():
 
         # Check existence for files
         for k in self.keys.values():
-            if k.value_type == Key_Value_Types.FILE and k.key_type == Control_Key_Types.REQUIRED:
+            if k.value_type == Key_Value_Types.FILE:
                 if self.is_output_file(k.key):
                     if k.value and not os.path.exists(os.path.dirname(k.value)):
                         self.state = Codes_Execution_Status.ERROR

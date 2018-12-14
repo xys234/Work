@@ -1,7 +1,7 @@
 import time
-import os
 import random
 import struct
+import sys
 
 from services.sys_defs import *
 from services.execution_service import Execution_Service
@@ -56,8 +56,9 @@ class PlanPrep(Execution_Service):
         self.vot_map_file = None
         self.zone_map_file = None
 
-        self.trip_adjustment_map = None       # {(O, D, Purpose, VehType): Change}
-        self.trip_index = None
+        self.trip_adjustment_map = None             # {(O, D, Purpose, Occupancy, VehType, Period, Income): Change}
+        self.trip_index = None                      # {(O, D, Purpose, Occupancy, VehType, Period, Income): [vid]}
+        self.vehicle_trajectory_index = None        # {vid: (pos, record_length)}
         self.trip_count = 0
         self.trip_count_added = 0
         self.trip_count_deleted = 0
@@ -74,7 +75,7 @@ class PlanPrep(Execution_Service):
         if self.project_dir is not None:
             for k in self.file_keys:
                 if KEY_DB[k].group_type == Key_Group_Types.GROUP:
-                    for g in range(self.highest_group):
+                    for g in range(1, self.highest_group+1):
                         if self.keys[k+"_"+str(g)].value:
                             self.keys[k+"_"+str(g)].value = os.path.join(self.project_dir, self.keys[k+"_"+str(g)].value)
                 else:
@@ -288,10 +289,51 @@ class PlanPrep(Execution_Service):
         Build the vehicle id index
         :return:
 
-        For text trajectories, vehicle ID to position as number of character and record length
-        For binary trajectories, vehicle ID to position as number of bytes and record length
+        For binary trajectories, vehicle ID to position as number of bytes and record length. For now,
+        the program will only process binary trajectories.
+        The program will only build indices into trips that exited the network (Tag=2).
+        The indices look like {Vid: (starting_bytes, record_length)}
+
+        TODO: For text trajectories, vehicle IDs to position as number of character and record length
+
         """
-        pass
+        if self.input_trajectory_format != "BINARY":
+            self.state = Codes_Execution_Status.ERROR
+            self.logger.error("Input trajectory file must be binary for trip adjustment")
+        else:
+            pos, record_length = 0, 0
+            veh_count = 0
+            with open(file=self.input_trajectory_file, mode='rb') as input_trajectories:
+                eof = False
+                while not eof:
+                    read_size = struct.calcsize(self.HEADER_PACKING_FMT)
+                    record_length += read_size
+                    data = input_trajectories.read(read_size)
+                    pos = input_trajectories.tell()
+                    if not data:
+                        eof = True
+                    else:
+                        try:
+                            data = struct.unpack(self.HEADER_PACKING_FMT, data)
+                        except struct.error:
+                            self.state = Codes_Execution_Status.ERROR
+                            self.logger.error("Error in reading binary trajectory file")
+                            eof = True
+                        if self.state == Codes_Execution_Status.OK:
+                            veh_count += 1
+                            vid, tag, numnodes, toll = data[0], data[1], data[11], data[19]
+                            if tag == 2:
+                                # header(4i) + node_seq; header+cumu_time_seq(4f); header+time_seq; header+delay_seq
+                                record_length += 4*(4+numnodes*4)
+                                if toll > 0:
+                                    record_length += (numnodes-1)*4
+                                pos += record_length
+                            else:
+                                skip_size = 4+numnodes*4
+                                pos += skip_size
+                            self.vehicle_trajectory_index[vid] = (pos, record_length)
+                            input_trajectories.seek(pos)
+                            record_length = 0
 
     def write_trajectories(self):
         """
@@ -301,64 +343,104 @@ class PlanPrep(Execution_Service):
 
         pass
 
+    @staticmethod
+    def parse_nested_sequences(byte_record):
+        """
+        Parse the byte sequence for nested trajectory information
+        :param byte_record:
+        :type bytearray
+        :return: tuples of nodes, cumulative times, link times, delays, and tolls if any
+        """
+
+        #TODO:
+        if isinstance(byte_record, bytearray):
+            pass
+        else:
+            raise TypeError("Input must be bytes")
+
     def convert_trajectories(self):
         """
         Convert text to/from binary vehicle trajectories
         :return:
         """
 
-        if self.input_trajectory_format == 'BINARY' and self.new_trajectory_format == 'TEXT':
-            with open(file=self.input_trajectory_file, mode='rb') as input_trajectories:
-                with open(file=self.new_trajectory_file, mode='w', buffering=super().OUTPUT_BUFFER) as output_trajectories:
-                    eof = False
-                    while not eof:
-                        data = input_trajectories.read(struct.calcsize(self.HEADER_PACKING_FMT))
-                        if not data:
+        veh_count = 0
+        with open(file=self.input_trajectory_file, mode='rb') as input_trajectories:
+            with open(file=self.new_trajectory_file, mode='w', buffering=super().OUTPUT_BUFFER) as output_trajectories:
+                eof = False
+                while not eof:
+                    data = input_trajectories.read(struct.calcsize(self.HEADER_PACKING_FMT))
+                    if not data:
+                        eof = True
+                    else:
+                        try:
+                            data = struct.unpack(self.HEADER_PACKING_FMT, data)
+                        except struct.error:
+                            self.state = Codes_Execution_Status.ERROR
+                            self.logger.error("Error in reading binary trajectory file")
                             eof = True
-                        else:
-                            try:
-                                data = struct.unpack(self.HEADER_PACKING_FMT, data)
-                            except struct.error:
-                                self.status = Codes_Execution_Status.ERROR
-                                self.logger.error("Error in reading binary trajectory file")
-                                eof = True
-                            if self.status == Codes_Execution_Status.OK:
-                                record = "Veh #{0:9d} Tag={1:2d} OrigZ={2:5d} DestZ={3:5d} Class={4:2d} Tck/HOV={5:2d} UstmN={6:7d} " \
-                                         "DownN={7:7d} DestN={8:7d} STime={9:8.2f} Total Travel Time={10:8.2f} # of Nodes={11:4d} " \
-                                         "VehType{12:2d} EVAC{13:2d} VOT{14:8.2f} tFlag{15:2d} PrefArrTime{16:7.1f} " \
-                                         "TripPur{17:4d} IniGas{18:5.1f} " \
-                                         "Toll{19:6.1f}\n".format(*data)
+                        if self.state == Codes_Execution_Status.OK:
+                            record = "Veh #{0:9d} Tag={1:2d} OrigZ={2:5d} DestZ={3:5d} Class={4:2d} Tck/HOV={5:2d} UstmN={6:7d} " \
+                                     "DownN={7:7d} DestN={8:7d} STime={9:8.2f} Total Travel Time={10:8.2f} # of Nodes={11:4d} " \
+                                     "VehType{12:2d} EVAC{13:2d} VOT{14:8.2f} tFlag{15:2d} PrefArrTime{16:7.1f} " \
+                                     "TripPur{17:4d} IniGas{18:5.1f} " \
+                                     "Toll{19:6.1f}\n".format(*data)
+                            output_trajectories.write(record)
+                            veh_count += 1
+                            sys.stdout.write("\rNumber of Vehicles Read = {:d}".format(veh_count))
+                            # Processed the nested data
+                            tag, numnodes, toll = data[1], data[11], data[19]
+
+                            # node sequence
+                            size_seq = struct.unpack("i", input_trajectories.read(4))[0]
+                            fmt = str(size_seq) + 'i'
+                            template = "{:8d}"*size_seq+"\n"
+                            data = input_trajectories.read(struct.calcsize(fmt))
+                            data = struct.unpack(fmt, data)
+                            record = template.format(*data)
+                            output_trajectories.write(record)
+
+                            flag_for_time_records = True
+                            if numnodes == tag == 1:
+                                flag_for_time_records = False
+
+                            if flag_for_time_records:
+                                # cumulative time
+                                size_seq = struct.unpack("i", input_trajectories.read(4))[0]
+                                fmt = str(size_seq) + 'f'
+                                template = "{:8.2f}"*size_seq+"\n"
+                                data = input_trajectories.read(struct.calcsize(fmt))
+                                data = struct.unpack(fmt, data)
+                                record = template.format(*data)
                                 output_trajectories.write(record)
 
-                                # Processed the nested data
-                                tag, number_nodes = data[1], data[11]
-                                if tag != 2:
-                                    number_nodes -= 1
-
-                                fmt_nodes = str(number_nodes) + 'i'
-                                fmt_times = str(number_nodes) + 'f'
-                                fmt_delays = str(number_nodes) + 'f'
-                                fmt_tolls = str(number_nodes) + 'f'
-
-                                data = input_trajectories.read(struct.calcsize(fmt_nodes))
-                                data = struct.unpack(fmt_nodes, data)
-                                record = "{:8d}{:8d}{:8d}{:8d}".format(*data)
+                                # link time
+                                size_seq = struct.unpack("i", input_trajectories.read(4))[0]
+                                fmt = str(size_seq) + 'f'
+                                template = "{:8.2f}"*size_seq+"\n"
+                                data = input_trajectories.read(struct.calcsize(fmt))
+                                data = struct.unpack(fmt, data)
+                                record = template.format(*data)
                                 output_trajectories.write(record)
 
-                                data = input_trajectories.read(struct.calcsize(fmt_times))
-                                data = struct.unpack(fmt_times, data)
-                                record = "{:8f}{:8f}{:8f}{:8f}".format(*data)
+                                # delay
+                                size_seq = struct.unpack("i", input_trajectories.read(4))[0]
+                                fmt = str(size_seq) + 'f'
+                                template = "{:8.2f}"*size_seq+"\n"
+                                data = input_trajectories.read(struct.calcsize(fmt))
+                                data = struct.unpack(fmt, data)
+                                record = template.format(*data)
                                 output_trajectories.write(record)
 
-                                data = input_trajectories.read(struct.calcsize(fmt_delays))
-                                data = struct.unpack(fmt_delays, data)
-                                record = "{:8f}{:8f}{:8f}{:8f}".format(*data)
-                                output_trajectories.write(record)
-
-                                data = input_trajectories.read(struct.calcsize(fmt_tolls))
-                                data = struct.unpack(fmt_tolls, data)
-                                record = "{:8f}{:8f}{:8f}{:8f}".format(*data)
-                                output_trajectories.write(record)
+                                if toll > 0:
+                                    fmt = str(size_seq) + 'f'
+                                    template = "{:8.2f}" * size_seq + "\n"
+                                    data = input_trajectories.read(struct.calcsize(fmt))
+                                    data = struct.unpack(fmt, data)
+                                    record = template.format(*data)
+                                    output_trajectories.write(record)
+        self.logger.info("Number of Vehicles Read = {:d}".format(veh_count))
+        sys.stdout.write("\n")
 
     def execute(self):
         super().execute()
@@ -368,7 +450,17 @@ class PlanPrep(Execution_Service):
             self.update_keys()
             self.print_keys()
 
-        self.initialize_internal_data()
+        if self.state == Codes_Execution_Status.OK:
+            self.initialize_internal_data()
+
+        if self.state == Codes_Execution_Status.OK:
+
+            # Format Conversion only
+            if self.trip_adjustment_file is None:
+                if self.input_trajectory_format == 'BINARY' and self.new_trajectory_format == 'TEXT':
+                    self.convert_trajectories()
+            else:
+                print("Do trajectory manipulation")
 
         end_time = time.time()
         execution_time = (end_time - start_time) / 60.0
@@ -390,7 +482,7 @@ if __name__ == '__main__':
     if DEBUG == 1:
         import os
         execution_path = r"C:\Projects\Repo\Work\SWIFT\scripts\test\cases"
-        control_file = "ConvertTrips_OTHER_MD.ctl"
+        control_file = "PlanPrep_AdjustTrips.ctl"
         control_file = os.path.join(execution_path, control_file)
         exe = PlanPrep(control_file=control_file)
         exe.execute()
