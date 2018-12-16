@@ -6,7 +6,8 @@ import time, h5py, numpy as np
 
 from services.sys_defs import *
 from services.execution_service import Execution_Service
-from services.data_service import DTGenerator, read_diurnal_file, bucket_rounding
+from services.data_service import DTGenerator, read_diurnal_file
+from services.fast_rounding import bucket_rounding, to_vehicles_helper
 from services.network_service import parse_origins
 
 
@@ -140,7 +141,7 @@ class ConvertTrips(Execution_Service):
         self.wait_time          = self.keys['WAIT_TIME'+suffix].value
         self.initial_gas        = self.keys['INITIAL_GAS'+suffix].value
 
-    def to_vehicles(self):
+    def rounding(self):
         if self.state == Codes_Execution_Status.ERROR:
             return
         if not os.path.exists(self.trip_table_file):
@@ -155,36 +156,26 @@ class ConvertTrips(Execution_Service):
         od = h5['/matrices/' + self.matrix_name][:]
         total_trips = od.sum()
         self.logger.info("Total vehicles in the matrix                = {0:.2f}".format(total_trips))
+        od = bucket_rounding(od)
+        total_trips = od.sum()
+        self.logger.info("Total vehicles in the matrix after rounding = {0:d}".format(total_trips))
+        return od
+
+    def to_vehicles(self):
 
         vclass = self.vehicle_class
         vtype = self.vehicle_type
         purp = self.trip_purpose
         vot = self.value_of_time
         period = self.time_period_range
-        field_filler = 0
 
-        od = bucket_rounding(od)
+        od = self.rounding()
         total_trips = od.sum()
-        self.logger.info("Total vehicles in the matrix after rounding = {0:d}".format(total_trips))
-
-        dt_pool = (t for t in self.dt_generator.dt(period=period, size=total_trips))
-        for i in range(od.shape[0]):
-            if od[i].sum() < 1:
-                continue
-            for j in range(od.shape[0]):
-                trip = od[i][j]
-                if trip > 0:
-                    orig = i + 1
-                    dest = j + 1
-                    for k in range(trip):
-                        gen_link_choice = np.random.choice(len(self.origins[i+1]))
-                        anode, bnode = self.origins[i+1][gen_link_choice][0], self.origins[i+1][gen_link_choice][1]
-                        ipos = float(np.random.randint(1, 10000)) / 10000
-                        dtime = next(dt_pool)
-                        yield anode, bnode, dtime, vclass, vtype, self.vehicle_occupancy, \
-                              self.vehicle_gen_mode, self.number_of_stops, self.enroute_info, self.indifference_band, \
-                              self.compliance_rate, orig, self.evac_flag, ipos, vot, field_filler, self.arrival_time, \
-                              purp, self.initial_gas, dest, self.wait_time      # 21 fields
+        dt_gen = self.dt_generator.dt(period=period, size=total_trips)
+        return to_vehicles_helper(od, dt_gen, period, self.origins, vtype, vclass,
+                            self.vehicle_occupancy, self.vehicle_gen_mode, self.number_of_stops, self.enroute_info,
+                            self.indifference_band, self.compliance_rate, self.evac_flag, self.arrival_time,
+                            self.initial_gas, self.wait_time, purp, vot)
 
     def write_vehicles(self, vehicle_pool):
         if self.state == Codes_Execution_Status.ERROR:
@@ -238,8 +229,8 @@ class ConvertTrips(Execution_Service):
                     self.write_vehicles(vehicle_pool)
                     self.logger.info("Matrix Converted in %.2f minutes" % ((time.time()-matrix_conversion_start_time)/60))
             self.add_vehicle_roster_header()
-        if os.path.exists(self.temp_vehicle):
-            os.remove(self.temp_vehicle)
+            if os.path.exists(self.temp_vehicle):
+                os.remove(self.temp_vehicle)
 
         end_time = time.time()
         execution_time = (end_time-start_time)/60.0
@@ -259,7 +250,7 @@ if __name__ == '__main__':
     if DEBUG == 1:
         import os
         execution_path = r"C:\Projects\Repo\Work\SWIFT\scripts\test\cases"
-        control_file = "ConvertTrips_OTHER_MD.ctl"
+        control_file = "ConvertTrips_OTHER_AM.ctl"
         control_file = os.path.join(execution_path, control_file)
         exe = ConvertTrips(control_file=control_file)
         exe.execute()
