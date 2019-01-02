@@ -23,7 +23,7 @@ def tabularize_vehicle_roster(vehicle_file, tabular_vehicle_file, with_header=Tr
 
 
 if __name__=='__main__':
-    dynust_folder = '..\data\Dynus_T'
-    vehicle_file_path = os.path.join(dynust_folder, 'vehicles_deliv_17.dat')
-    tabular_vehicle_file_path = os.path.join(dynust_folder, 'vehicles_deliv_17.csv')
+    dynust_folder = 'C:\Projects\SWIFT\SWIFT_Project_Data\Outputs'
+    vehicle_file_path = os.path.join(dynust_folder, 'Vehicles_Trip_Adjustment.dat')
+    tabular_vehicle_file_path = os.path.join(dynust_folder, 'Vehicles_Trip_Adjustment.csv')
     tabularize_vehicle_roster(vehicle_file_path, tabular_vehicle_file_path, with_header=True)

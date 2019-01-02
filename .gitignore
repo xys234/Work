@@ -19,9 +19,4 @@
 *.csv
 *.dat
 *.png
-*.obj
-*.exp
-*.lib
-*.c
-*.pyd
 *.itf

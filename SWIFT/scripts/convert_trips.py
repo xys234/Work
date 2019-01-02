@@ -1,8 +1,9 @@
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
+import time
+import h5py
 import os
-import time, h5py, numpy as np
 
 from services.sys_defs import *
 from services.execution_service import Execution_Service
@@ -87,9 +88,9 @@ class ConvertTrips(Execution_Service):
         if self.state == Codes_Execution_Status.ERROR:
             return
         if self.project_dir is not None:
-            self.keys['ORIGIN_FILE'].value = os.path.join(self.project_dir, self.keys['ORIGIN_FILE'].value)
-            self.keys['NEW_VEHICLE_ROSTER_FILE'].value = \
-                os.path.join(self.project_dir, self.keys['NEW_VEHICLE_ROSTER_FILE'].value)
+            # self.keys['ORIGIN_FILE'].value = os.path.join(self.project_dir, self.keys['ORIGIN_FILE'].value)
+            # self.keys['NEW_VEHICLE_ROSTER_FILE'].value = \
+            #     os.path.join(self.project_dir, self.keys['NEW_VEHICLE_ROSTER_FILE'].value)
             for i in range(1, self.highest_group+1):
                 suffix = "_" + str(i)
                 self.keys['TRIP_TABLE_FILE'+suffix].value = \
@@ -155,10 +156,10 @@ class ConvertTrips(Execution_Service):
 
         od = h5['/matrices/' + self.matrix_name][:]
         total_trips = od.sum()
-        self.logger.info("Total vehicles in the matrix                = {0:.2f}".format(total_trips))
+        self.logger.info("Total vehicles in the matrix                = {0:,.2f}".format(total_trips))
         od = bucket_rounding(od)
         total_trips = od.sum()
-        self.logger.info("Total vehicles in the matrix after rounding = {0:d}".format(total_trips))
+        self.logger.info("Total vehicles in the matrix after rounding = {0:,d}".format(total_trips))
         return od
 
     def to_vehicles(self):
@@ -194,7 +195,7 @@ class ConvertTrips(Execution_Service):
                 record = '%12d%7.2f\n' % (vals[-2:])
                 f.write(record)
 
-        self.logger.info("Total vehicles converted                    = {0:d}".format(vid))
+        self.logger.info("Total vehicles converted                    = {0:,d}".format(vid))
         self.vehicle_id = vid + 1
 
     def add_vehicle_roster_header(self):
@@ -240,16 +241,17 @@ class ConvertTrips(Execution_Service):
         if self.state == Codes_Execution_Status.ERROR:
             self.logger.info("Execution completed with ERROR in %.2f minutes" % execution_time)
         else:
-            self.logger.info("Total vehicles converted               = {0:d}".format(self.vehicle_id - 1))
+            self.logger.info("Total vehicles converted               = {0:,d}".format(self.vehicle_id - 1))
             self.logger.info("Execution completed in %.2f minutes" % execution_time)
 
 
 if __name__ == '__main__':
 
-    DEBUG = 1
+    DEBUG = 0
     if DEBUG == 1:
         import os
-        execution_path = r"C:\Projects\Repo\Work\SWIFT\scripts\test\cases"
+        execution_path = r"C:\Projects\SWIFT\SWIFT_Project_Data\Controls"
+        # control_file = "ConvertTrips_HBW_AM.ctl"
         control_file = "ConvertTrips_OTHER_AM.ctl"
         control_file = os.path.join(execution_path, control_file)
         exe = ConvertTrips(control_file=control_file)
