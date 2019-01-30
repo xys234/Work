@@ -1,8 +1,8 @@
 
 import re
-import time
 import os
 import itertools
+import random
 
 from services.sys_defs import *
 from services.key import Key
@@ -26,6 +26,7 @@ class Execution_Service():
         self.required_keys = required_keys                  # a tuple for all root-keys required
         self.acceptable_keys = self.common_keys + acceptable_keys              # a tuple for all root-keys acceptable
         self.acceptable_keys += self.required_keys
+        self.group_keys = None
         self.highest_group = 1
 
         self.control_file = control_file
@@ -33,10 +34,11 @@ class Execution_Service():
         self.title = None
         self.report_file = None
         self.project_dir = None
-        self.random_seed = None
+        self.random_seed = 47
         self.logger = None
 
-        self.state = Codes_Execution_Status.OK      # todo: remove all raise errors
+        self.state = Codes_Execution_Status.OK
+        random.seed(self.random_seed)
 
     @property
     def state(self):
@@ -57,9 +59,13 @@ class Execution_Service():
         :param line: a string with comments at the end. Comments symbols not at the beginning
         :return:
         """
+        loc_pound_sign = line.find("##")
+        loc_slash_sign = line.find("//")
 
-        if line.find("##") >= 0:
-            return line[:line.find("##")]
+        if loc_pound_sign >= 0:
+            return line[:loc_pound_sign]
+        elif loc_slash_sign >= 0:
+            return line[:loc_slash_sign]
         else:
             return line
 
@@ -206,8 +212,12 @@ class Execution_Service():
 
     def check_keys(self):
         """
-        Populate all keys and check required key
+        Populate all keys and check required key;
         :return:
+
+        The key dictionary has all the acceptable keys in fully suffixed notation; If the value is None, the key
+        is not set by the user
+
         """
 
         # Print out invalid keys
@@ -265,7 +275,7 @@ class Execution_Service():
 
         # Check existence for files
         for k in self.keys.values():
-            if k.value_type == Key_Value_Types.FILE and k.key_type == Control_Key_Types.REQUIRED:
+            if k.value_type == Key_Value_Types.FILE:
                 if self.is_output_file(k.key):
                     if k.value and not os.path.exists(os.path.dirname(k.value)):
                         self.state = Codes_Execution_Status.ERROR
@@ -276,7 +286,7 @@ class Execution_Service():
                         self.logger.error("File %s for %s does not exist" % (k.value, k.key))
 
     def print_keys(self):
-        keys = [(k, v.input_value, v.key_order) for k, v in self.keys.items()]
+        keys = [(k, v.value, v.key_order) for k, v in self.keys.items()]
         keys = sorted(keys, key=lambda k: k[2])
         for k, v, _ in keys:
             self.logger.info("%s = %s" % (k, v))
@@ -285,7 +295,6 @@ class Execution_Service():
         self.parse_control_file()
         self.initialize_execution()
         if self.state == Codes_Execution_Status.OK:
-            self.logger.info("%s Execution Starts" % self.title)
             self.check_keys()
 
 

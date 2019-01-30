@@ -96,9 +96,9 @@ if __name__ == '__main__':
         'VEHICLE_TYPE',
     )
 
-    control_file_folder = r'cases'
+    control_file_folder = r'C:\Projects\SWIFT\SWIFT_Project_Data\Controls'
 
-    matrix_folder = r'C:\Projects\Repo\Work\SWIFT\data\Dynus_T\OD\2017'
+    matrix_folder = r'C:\Projects\SWIFT\SWIFT_Project_Data\Inputs\OD\2017'
     matrices_am = ["OD AM3HR HBNW Vehicles", "OD AM3HR HBW Vehicles", "OD AM3HR NHB Vehicles", "OD AM3HR Other VEHICLEs"]
     matrices_md = ["OD MD6HR HBNW Vehicles", "OD MD6HR HBW Vehicles", "OD MD6HR NHB Vehicles", "OD MD6HR Other VEHICLEs"]
     matrices_pm = ["OD PM4HR HBNW Vehicles", "OD PM4HR HBW Vehicles", "OD PM4HR NHB Vehicles", "OD PM4HR Other VEHICLEs"]
@@ -120,7 +120,7 @@ if __name__ == '__main__':
             "nhwdai1": 9.6, "nhwdai2": 15.04, "nhwdai3": 20.48, "nhwdai4": 27.52, "nhwdai5": 37.12, "nhws2i12": 21.56,
             "nhws2i3": 35.84, "nhws2i45": 56.56, "nhws3i12": 30.8, "nhws3i3": 51.2, "nhws3i45": 80.8,
             "Cargo": 64.0, "Serv": 40.0, "taxi": 18.94, "exta": 18.94}
-    diurnal_file = r'diurnal.csv'
+    diurnal_file = r'Inputs\diurnal.csv'
 
     PURP_MAP = {
         1: 'HBW',
@@ -136,10 +136,11 @@ if __name__ == '__main__':
     for m in matrices:
         key_group = 0
         matrix_file = os.path.join(matrix_folder, m + '.omx')
-        matrix_file_out = os.path.join(r'OD\2017', m + '.omx')
+        matrix_file_out = os.path.join(r'Inputs\OD\2017', m + '.omx')
         h5 = h5py.File(matrix_file, 'r')
         tables = h5['/matrices/'].keys()
 
+        purp = vot = occ = vtype = 0
         for t in tables:
             if t.find('all') > 0:
                 continue
@@ -171,13 +172,13 @@ if __name__ == '__main__':
 
                 if key_group == 1:
                     f.write("TITLE                       {0:s}\n".format(PURP_MAP[purp]+'_'+period.upper()))
-                    f.write(r"PROJECT_DIRECTORY           C:\Projects\Repo\Work\SWIFT\data\Dynus_T")
+                    f.write(r"PROJECT_DIRECTORY           C:\Projects\SWIFT\SWIFT_Project_Data")
                     f.write('\n')
                     f.write("REPORT_FILE                      \n")
                     f.write('\n')
-                    f.write("NUMBER_OF_ZONES             5263\n".format(PURP_MAP[purp] + '_' + period.upper()))
-                    f.write("ORIGIN_FILE                 origin.dat\n".format(PURP_MAP[purp] + '_' + period.upper()))
-                    f.write("NEW_VEHICLE_ROSTER_FILE     {0:s}\n".format('Vehicles_'+PURP_MAP[purp]+'_'+period.upper()+'.dat'))
+                    f.write("NUMBER_OF_ZONES             5263\n")
+                    f.write("ORIGIN_FILE                 Inputs\\Network\\origin.dat\n")
+                    f.write("NEW_VEHICLE_ROSTER_FILE     Outputs\\{0:s}\n".format('Vehicles_'+PURP_MAP[purp]+'_'+period.upper()+'.dat'))
                     f.write('\n')
                     f.write('\n')
 

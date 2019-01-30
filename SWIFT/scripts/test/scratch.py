@@ -2,6 +2,7 @@ import os
 import sys
 import random
 import struct
+import scipy
 
 # seeking position considers return as 2 chars
 # read position considers return as 1 char
@@ -198,16 +199,39 @@ def wrap_list(lst, items_per_line=5):
 
 if __name__ == '__main__':
 
-    data_dir = r'C:\Projects\Repo\Work\SWIFT\data\Dynus_T'
-    veh_trajectory_file_binary = r'Calibrated\VehTrajectory.itf'
-    veh_trajectory_file_text = r'Calibrated\VehTrajectory.dat'
+    data_dir = r'C:\Projects\SWIFT\SWIFT_Project_Data'
+    veh_trajectory_file_binary = r'Inputs\VehTrajectory.itf'
+    veh_trajectory_file_text = r'VehTrajectory.dat'
     veh_trajectory_file_binary = os.path.join(data_dir, veh_trajectory_file_binary)
     veh_trajectory_file_text = os.path.join(data_dir, veh_trajectory_file_text)
 
     out_file = 'test.dat'
     out_file = os.path.join(data_dir, out_file)
 
-    read_binary_trajectories(veh_trajectory_file_binary, veh_trajectory_file_text, out_file)
+    # read_binary_trajectories(veh_trajectory_file_binary, veh_trajectory_file_text, out_file)
+
+    with open(file=veh_trajectory_file_binary, mode='rb') as input_trajectories:
+        packing_format = "=ibhhbiiiiffibbfbfhff"
+        # all = input_trajectories.read(-1)
+        # print(input_trajectories.tell())
+
+        # input_trajectories.seek(77373827+59+4+4*1)    # incomplete record???
+        input_trajectories.seek(1311-59)
+        data = input_trajectories.read(4)
+        data_unpack = struct.unpack(packing_format, data)
+        data_unpack = struct.unpack("i", data)
+        print(data)
+        print(data_unpack)
+
+    # vehicle_trajectory_text = r"C:\Projects\SWIFT\SWIFT_Project_Data\Outputs\End_of_line_test.txt"
+    # vehicle_trajectory_text = r"C:\Projects\SWIFT\SWIFT_Project_Data\Outputs\VehTrajectory_Converted.txt"
+    # vehicle_trajectory_output = r"C:\Projects\SWIFT\SWIFT_Project_Data\Outputs\VehTrajectory_Index_Test.txt"
+    #
+    # with open(file=vehicle_trajectory_text, mode='r') as input_trajectories:
+    #     with open(file=vehicle_trajectory_output, mode='w') as output_trajectories:
+    #         input_trajectories.seek(152137252)
+    #         record = input_trajectories.read(5101)
+    #         output_trajectories.write(record)
 
     # with open(veh_trajectory_file, mode='r') as f:
     #     pos = 0

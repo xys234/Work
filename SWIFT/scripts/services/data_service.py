@@ -88,6 +88,67 @@ def bucket_rounding(mat):
     return rounded.clip(min=0).astype(np.int16)
 
 
+class Trip:
+
+    trip_fmt_str_1 = '%9d%7d%7d%9.1f%6d%6d%6d%6d%6d%6d%12.4f%12.4f%6d%6d%20.8f%10.2f%5d%8.1f%5d%6.1f\n'
+    trip_fmt_str_2 = '%12d%9.2f\n'
+    expected_number_of_fields = 22
+
+    def __init__(self, trip_string):
+        """
+
+        :param trip_string: a complete string including destination and wait time fields
+        """
+
+        trip_fields = trip_string.strip().split()
+        if len(trip_fields) != self.expected_number_of_fields:
+            raise ValueError("The input trip string has %d fields; Expected %d".format(len(trip_fields),
+                                                                                       self.expected_number_of_fields))
+        vid, ugen, dgen, stime, vclass, vtype, ioc, number_of_nodes, number_of_stops, \
+        info, ribf, comp, izone, evac, initpos, vot, tflag, arrtime, purp, gas, dzone, waittime = trip_fields
+
+        self._vid = int(vid)
+        self.ugen = int(ugen)
+        self.dgen = int(dgen)
+        self.stime = float(stime)
+        self.vclass = int(vclass)
+        self.vtype = int(vtype)
+        self.ioc = int(ioc)
+        self.number_of_nodes = int(number_of_nodes)
+        self.number_of_stops = int(number_of_stops)
+        self.info = int(info)
+        self.ribf = float(ribf)
+        self.comp = float(comp)
+        self.izone = int(izone)
+        self.evac = int(evac)
+        self.initpos = float(initpos)
+        self.vot = float(vot)
+        self.tflag = int(tflag)
+        self.arrtime = float(arrtime)
+        self.purp = int(purp)
+        self.gas = float(gas)
+        self.dzone = int(dzone)
+        self.waittime = float(waittime)
+
+    @property
+    def vid(self):
+        return self._vid
+
+    @vid.setter
+    def vid(self, value):
+        self._vid = int(value)
+
+    def to_string(self):
+        str1 = self.trip_fmt_str_1 % (self.vid, self.ugen, self.dgen, self.stime, self.vclass, self.vtype, self.ioc,
+                                      self.number_of_nodes, self.number_of_stops, self.info, self.ribf, self.comp,
+                                      self.izone, self.evac, self.initpos, self.vot, self.tflag, self.arrtime,
+                                      self.purp, self.gas)
+        str2 = self.trip_fmt_str_2 % (self.dzone, self.waittime)
+        return str1, str2
+
+
+# ----------------- Utility functions -------------------------#
+
 def normal_rounding(mat):
     """
     normal rounding and add the difference to the diagonal elements
