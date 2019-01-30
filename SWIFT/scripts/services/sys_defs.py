@@ -63,12 +63,16 @@ KEY_DB = {
     'PROJECT_DIRECTORY':        Key_Info(Key_Value_Types.STRING,      None,              Key_Group_Types.NOGROUP, 3),
     'RANDOM_SEED':              Key_Info(Key_Value_Types.INTEGER,     0,                 Key_Group_Types.NOGROUP, 4),
 
-    'NUMBER_OF_ZONES':          Key_Info(Key_Value_Types.INTEGER,     None, Key_Group_Types.NOGROUP, 20),
-    'ORIGIN_FILE':              Key_Info(Key_Value_Types.FILE,        None, Key_Group_Types.NOGROUP, 21),
-    'NEW_VEHICLE_ROSTER_FILE':  Key_Info(Key_Value_Types.FILE,        None, Key_Group_Types.NOGROUP, 22),
-    'TRAJECTORY_FILE':          Key_Info(Key_Value_Types.FILE,        None, Key_Group_Types.NOGROUP, 23),
-    'NEW_TRAJECTORY_FILE':      Key_Info(Key_Value_Types.FILE,        None, Key_Group_Types.NOGROUP, 24),
-    'TRIP_ADJUSTMENT_FILE':     Key_Info(Key_Value_Types.FILE,        None, Key_Group_Types.NOGROUP, 25),
+    'NUMBER_OF_ZONES':          Key_Info(Key_Value_Types.INTEGER,     None,     Key_Group_Types.NOGROUP, 20),
+    'ORIGIN_FILE':              Key_Info(Key_Value_Types.FILE,        None,     Key_Group_Types.NOGROUP, 21),
+    'NEW_VEHICLE_ROSTER_FILE':  Key_Info(Key_Value_Types.FILE,        None,     Key_Group_Types.NOGROUP, 22),
+    'TRAJECTORY_FILE':          Key_Info(Key_Value_Types.FILE,        None,     Key_Group_Types.NOGROUP, 23),
+    'TRAJECTORY_FORMAT':        Key_Info(Key_Value_Types.STRING,      "BINARY", Key_Group_Types.NOGROUP, 24),
+    'NEW_TRAJECTORY_FILE':      Key_Info(Key_Value_Types.FILE,        None,     Key_Group_Types.NOGROUP, 25),
+    'NEW_TRAJECTORY_FORMAT':    Key_Info(Key_Value_Types.STRING,      "BINARY", Key_Group_Types.NOGROUP, 25),
+    'TRIP_ADJUSTMENT_FILE':     Key_Info(Key_Value_Types.FILE,        None,     Key_Group_Types.NOGROUP, 26),
+    'NEW_VEHICLE_MAP_FILE':     Key_Info(Key_Value_Types.FILE,        None,     Key_Group_Types.NOGROUP, 27),
+
 
     'TRIP_TABLE_FILE':          Key_Info(Key_Value_Types.FILE,        None,    Key_Group_Types.GROUP, 100),
     'MATRIX_NAME':              Key_Info(Key_Value_Types.STRING,      None,    Key_Group_Types.GROUP, 101),
