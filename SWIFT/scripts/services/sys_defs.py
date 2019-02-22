@@ -73,7 +73,8 @@ KEY_DB = {
     'TRIP_ADJUSTMENT_FILE':     Key_Info(Key_Value_Types.FILE,        None,     Key_Group_Types.NOGROUP, 26),
     'NEW_VEHICLE_MAP_FILE':     Key_Info(Key_Value_Types.FILE,        None,     Key_Group_Types.NOGROUP, 27),
     'NEW_FLAT_TRIP_FILE':       Key_Info(Key_Value_Types.FILE,        None,     Key_Group_Types.NOGROUP, 28),
-
+    'NETWORK_FILE':             Key_Info(Key_Value_Types.FILE,        None,     Key_Group_Types.NOGROUP, 29),
+    'NEW_NETWORK_FILE':         Key_Info(Key_Value_Types.FILE,        None,     Key_Group_Types.NOGROUP, 30),
 
     'TRIP_TABLE_FILE':          Key_Info(Key_Value_Types.FILE,        None,    Key_Group_Types.GROUP, 100),
     'MATRIX_NAME':              Key_Info(Key_Value_Types.STRING,      None,    Key_Group_Types.GROUP, 101),
@@ -102,6 +103,7 @@ KEY_DB = {
     'NEW_PROBLEM_FILE':         Key_Info(Key_Value_Types.FILE,        None, Key_Group_Types.NOGROUP, 124),
     'SELECTION_FILE':           Key_Info(Key_Value_Types.FILE,        None, Key_Group_Types.NOGROUP, 125),
     'SELECTION_FORMAT':         Key_Info(Key_Value_Types.STRING,      "COMMA_DELIMITED", Key_Group_Types.NOGROUP, 126),
+    'SCENARIO_PARAMETER_FILE':  Key_Info(Key_Value_Types.FILE,        None, Key_Group_Types.NOGROUP, 127),
 }
 if __name__ == '__main__':
     pass
