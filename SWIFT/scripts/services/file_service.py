@@ -1,103 +1,44 @@
-from collections import namedtuple
 import struct
+from services.namedlist import namedlist
 
-class Field:
-    __slots__ = ('_name', '_type', '_width', '_size', '_value', '_fmt')
+fieldsNetworkHeaderRecord = ('number_of_zones', 'number_of_nodes',
+                             'number_of_links', 'number_of_k_sp', 'use_super_zones')
+BaseNetworkHeaderRecord = namedlist('BaseNetworkHeaderRecord', fieldsNetworkHeaderRecord)
 
-    def __init__(self, name=None, type=None, width=None, size=None, value=None, fmt=None):
-        """
 
-        :param name:
-        :type str
-        :param type:
-        :type str
-        :param width:
-        :type int
-        :param size:
-        :type int
-        :param value:
-        :param fmt:
-        :type str
-        """
-        self.name = name
-        self.type = type
-        self.width = width
-        self.size = size
-        self.value = value
-        self.fmt = fmt
+class NetworkHeaderRecord(BaseNetworkHeaderRecord):
 
-    @property
-    def name(self):
-        return self._name
-
-    @name.setter
-    def name(self, val):
-        self._name = val
-
-    @property
-    def type(self):
-        return self._type
-
-    @type.setter
-    def type(self, val):
-        self._type = val
-
-    @property
-    def width(self):
-        return self._width
-
-    @width.setter
-    def width(self, val):
-        self._width = val
-
-    @property
-    def size(self):
-        return self._size
-
-    @size.setter
-    def size(self, val):
-        self._size = val
-
-    @property
-    def value(self):
-        return self._value
-
-    @value.setter
-    def value(self, val):
-        self._value = val
-
-    @property
-    def fmt(self):
-        return self._fmt
-
-    @fmt.setter
-    def fmt(self, val):
-        self._fmt = val
-
-    @property
-    def bytes_fmt(self):
-
-        if self.type == 'i':
-            if self.size == 4:
-                pass
-
-    def __str__(self):
-        return self.fmt.format(self.value)
+    fmt_bin = "=5i"
 
     def __repr__(self):
-        return f'Field(name={self.name}, type={self.type}, width={self.width}, size={self.size}, ' \
-               f'value={self.value}, fmt={self.fmt})'
+        field_list = '(' + ', '.join([f+'=%r' for f in self._fields]) + ')'
+        return self.__class__.__name__ + field_list % tuple(self.__iter__())
 
-    def __bytes__(self):
-        """
-        Return the byte representation of the value
-        :return:
-        """
-        return struct.pack(self.bytes_fmt, self.value)
+    def __str__(self):
+        self.to_str()
 
-class Record(tuple):
-    pass
+    def update(self, values):
+        if len(values) != len(self):
+            raise ValueError(f'Argument must be a tuple of size {len(self)}')
+        self._update(**dict(zip(self._fields, values)))
 
+    def to_str(self):
+        return f'{self.number_of_zones:>7}{self.number_of_nodes:>7}{self.number_of_links:>7}' \
+               f'{self.number_of_k_sp:>7}{self.use_super_zones:>7}'
+
+    def from_str(self, values):
+        if not isinstance(values, tuple) or not isinstance(values[0], str):
+            raise TypeError('Argument must be a tuple of strings')
+        if len(values) != len(self._fields):
+            raise ValueError(f'Argument must be a tuple of size {len(self)}')
+
+        self.update(values)
+
+    def to_bin(self):
+        return struct.pack(self.fmt_bin, *tuple(self.__iter__()))
+
+    def from_bin(self, values):
+        self.update(struct.unpack(self.fmt_bin, values))
 
 class File:
     pass
@@ -105,8 +46,11 @@ class File:
 
 if __name__=='__main__':
 
-    f1 = Field('lanes','i',4,4,3,'Lanes= {:d}')
-    print(f1)
-    print(f1.__repr__())
-    f1_bin = bytes(f1)
-    print(struct.unpack(f1.bytes_fmt))
+    r = NetworkHeaderRecord(5263, 22942, 45701, 1, 1)
+    print(repr(r))
+    print(r.to_str())
+    print(isinstance(r, NetworkHeaderRecord))
+    r2 = NetworkHeaderRecord(0,0,0,0,0)
+    r_bin = r.to_bin()
+    r2.from_bin(r_bin)
+    print(r2.to_str())
