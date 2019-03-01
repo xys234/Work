@@ -958,13 +958,13 @@ class PlanPrep(Execution_Service):
 
 if __name__ == '__main__':
 
-    DEBUG = 0
+    DEBUG = 1
     if DEBUG == 1:
         import os
         execution_path = r"C:\Projects\SWIFT\SWIFT_Project_Data\Controls"
-        # control_file = "PlanPrep_SelectTrajectories.ctl"
+        control_file = "PlanPrep_SelectTrajectories.ctl"
         # control_file = "PlanPrep_toTextTrajectories.ctl"
-        control_file = "PlanPrep_AdjustTrajectories.ctl"
+        # control_file = "PlanPrep_AdjustTrajectories.ctl"
         control_file = os.path.join(execution_path, control_file)
         exe = PlanPrep(control_file=control_file)
         exe.execute()

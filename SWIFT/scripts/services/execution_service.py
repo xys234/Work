@@ -139,7 +139,7 @@ class Execution_Service():
         if self.keys['PROJECT_DIRECTORY'].input_value:
             self.project_dir = self.keys['PROJECT_DIRECTORY'].input_value
         else:
-            self.project_dir = ''
+            self.project_dir = '.'
         self.keys['PROJECT_DIRECTORY'].value = self.project_dir
 
         if self.keys['REPORT_FILE'].input_value:
