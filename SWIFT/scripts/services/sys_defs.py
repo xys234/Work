@@ -48,6 +48,12 @@ class Key_Group_Types(IntEnum):
     NOGROUP = 0
     GROUP = 1
 
+
+class SystemFileTypes(IntEnum):
+    BINARY = 0
+    COMMA_DELIMITED = 1
+    FIXED_WIDTH = 2
+
 # Output file always starts with "NEW_" and ends with "_FILE"
 Key_Info = namedtuple('Key_Info', ('value_type', 'value_default', 'group_type', 'key_order'))
 
@@ -104,6 +110,7 @@ KEY_DB = {
     'SELECTION_FILE':           Key_Info(Key_Value_Types.FILE,        None, Key_Group_Types.NOGROUP, 125),
     'SELECTION_FORMAT':         Key_Info(Key_Value_Types.STRING,      "COMMA_DELIMITED", Key_Group_Types.NOGROUP, 126),
     'SCENARIO_PARAMETER_FILE':  Key_Info(Key_Value_Types.FILE,        None, Key_Group_Types.NOGROUP, 127),
+    'CAPACITY_FACTOR_FILE':     Key_Info(Key_Value_Types.FILE,        None, Key_Group_Types.NOGROUP, 128),
 }
 if __name__ == '__main__':
     pass
