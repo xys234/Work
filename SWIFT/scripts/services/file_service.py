@@ -1,32 +1,59 @@
 import struct
 from services.namedlist import namedlist
 
-fieldsNetworkHeaderRecord = ('number_of_zones', 'number_of_nodes',
-                             'number_of_links', 'number_of_k_sp', 'use_super_zones')
+# Record field definitions
+fieldsNetworkHeaderRecord = (('number_of_zones', 0), ('number_of_nodes', 0),
+                             ('number_of_links', 0), ('number_of_k_sp', 0), ('use_super_zones', 0))
 BaseNetworkHeaderRecord = namedlist('BaseNetworkHeaderRecord', fieldsNetworkHeaderRecord)
 
+fieldsNetworkNodeZoneRecord = (('node', 0), ('zone', 0))
+BaseNetworkNodeZoneRecord = namedlist('BaseNetworkNodeZoneRecord', fieldsNetworkNodeZoneRecord)
 
-class NetworkHeaderRecord(BaseNetworkHeaderRecord):
+fieldsNetworkLinkRecord = (('node', 0), ('zone', 0))
+BaseNetworkLinkRecord = namedlist('BaseNetworkLinkRecord', fieldsNetworkLinkRecord)
 
-    fmt_bin = "=5i"
+
+class RecordMixin:
+    converter = {
+            'i': int,
+            'b': int,
+            'h': int,
+            'f': float,
+        }
+
+    @staticmethod
+    def convert(values, fmt):
+        if len(values) != len(fmt) - 1:
+            raise ValueError(f'Arguments must be a tuple of size {len(values)}')
+        return tuple([RecordMixin.converter[f](v) for v, f in zip(values, fmt[1:])])
+
+
+class NetworkHeaderRecord(RecordMixin, BaseNetworkHeaderRecord):
+
+    __slots__ = ()
+
+    fmt_binary = "=iiiii"
+    fmt_string = '{:>7d}{:>7d}{:>7d}{:>7d}{:>7d}'
 
     def __repr__(self):
         field_list = '(' + ', '.join([f+'=%r' for f in self._fields]) + ')'
-        return self.__class__.__name__ + field_list % tuple(self.__iter__())
+        return self.__class__.__name__ + field_list % self.values
 
     def __str__(self):
-        self.to_str()
+        self.to_string()
+
+    @property
+    def values(self):
+        return tuple(self.__iter__())
 
     def update(self, values):
-        if len(values) != len(self):
-            raise ValueError(f'Argument must be a tuple of size {len(self)}')
-        self._update(**dict(zip(self._fields, values)))
+        converted_values = RecordMixin.convert(values, self.fmt_binary)
+        self._update(**dict(zip(self._fields, converted_values)))
 
-    def to_str(self):
-        return f'{self.number_of_zones:>7}{self.number_of_nodes:>7}{self.number_of_links:>7}' \
-               f'{self.number_of_k_sp:>7}{self.use_super_zones:>7}'
+    def to_string(self):
+        return self.fmt_string.format(*self.values)
 
-    def from_str(self, values):
+    def from_string(self, values):
         if not isinstance(values, tuple) or not isinstance(values[0], str):
             raise TypeError('Argument must be a tuple of strings')
         if len(values) != len(self._fields):
@@ -34,11 +61,80 @@ class NetworkHeaderRecord(BaseNetworkHeaderRecord):
 
         self.update(values)
 
-    def to_bin(self):
-        return struct.pack(self.fmt_bin, *tuple(self.__iter__()))
+    def to_bytes(self):
+        return struct.pack(self.fmt_binary, *self.values)
 
-    def from_bin(self, values):
-        self.update(struct.unpack(self.fmt_bin, values))
+    def from_bytes(self, values):
+        self.update(struct.unpack(self.fmt_binary, values))
+
+
+class NetworkNodeZoneRecord(RecordMixin, BaseNetworkNodeZoneRecord):
+    __slots__ = ()
+
+    fmt_binary = "=ii"
+    fmt_string = '{:>7d}{:>5d}'
+
+    def __repr__(self):
+        field_list = '(' + ', '.join([f+'=%r' for f in self._fields]) + ')'
+        return self.__class__.__name__ + field_list % self.values
+
+    def __str__(self):
+        self.to_string()
+
+    @property
+    def values(self):
+        return tuple(self.__iter__())
+
+    def update(self, values):
+        converted_values = RecordMixin.convert(values, self.fmt_binary)
+        self._update(**dict(zip(self._fields, converted_values)))
+
+    def to_string(self):
+        return self.fmt_string.format(*self.values)
+
+    def from_string(self, values):
+        if not isinstance(values, tuple) or not isinstance(values[0], str):
+            raise TypeError('Argument must be a tuple of strings')
+        if len(values) != len(self._fields):
+            raise ValueError(f'Argument must be a tuple of size {len(self)}')
+
+        self.update(values)
+
+
+class NetworkLinkRecord(RecordMixin, BaseNetworkNodeZoneRecord):
+    __slots__ = ()
+
+    fmt_binary = "=ii"
+    fmt_string = '{:>7d}{:>5d}'
+
+    def __repr__(self):
+        field_list = '(' + ', '.join([f+'=%r' for f in self._fields]) + ')'
+        return self.__class__.__name__ + field_list % self.values
+
+    def __str__(self):
+        self.to_string()
+
+    @property
+    def values(self):
+        return tuple(self.__iter__())
+
+    def update(self, values):
+        converted_values = RecordMixin.convert(values, self.fmt_binary)
+        self._update(**dict(zip(self._fields, converted_values)))
+
+    def to_string(self):
+        return self.fmt_string.format(*self.values)
+
+    def from_string(self, values):
+        if not isinstance(values, tuple) or not isinstance(values[0], str):
+            raise TypeError('Argument must be a tuple of strings')
+        if len(values) != len(self._fields):
+            raise ValueError(f'Argument must be a tuple of size {len(self)}')
+
+        self.update(values)
+
+
+
 
 class File:
     pass
@@ -46,11 +142,11 @@ class File:
 
 if __name__=='__main__':
 
-    r = NetworkHeaderRecord(5263, 22942, 45701, 1, 1)
+    r = NetworkHeaderRecord()
     print(repr(r))
-    print(r.to_str())
-    print(isinstance(r, NetworkHeaderRecord))
-    r2 = NetworkHeaderRecord(0,0,0,0,0)
-    r_bin = r.to_bin()
-    r2.from_bin(r_bin)
-    print(r2.to_str())
+    r.from_string(('5263', '22942', '45701', '1', '1'))
+    print(r.to_string())
+    r2 = NetworkHeaderRecord()
+    r_bin = r.to_bytes()
+    r2.from_bytes(r_bin)
+    print(r2.to_string())
