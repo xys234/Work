@@ -562,61 +562,61 @@ class PlanPrep(Execution_Service):
 
         """
 
-        with open(file=self.input_trajectory_file, mode='rb') as input_trajectories:
-            with open(file=self.new_trajectory_file, mode='w', buffering=super().OUTPUT_BUFFER) as output_trajectories:
-                eof = False
-                while not eof:
-                    data = input_trajectories.read(struct.calcsize(self.HEADER_PACKING_FMT))
-                    if not data:
-                        eof = True
-                    else:
-                        try:
-                            data = struct.unpack(self.HEADER_PACKING_FMT, data)
-                        except struct.error:
-                            self.state = Codes_Execution_Status.ERROR
-                            self.logger.error("Error in reading binary trajectory file")
-                            eof = True
-                        if self.state == Codes_Execution_Status.OK:
-                            record = "Veh #{0:9d} Tag={1:2d} OrigZ={2:5d} DestZ={3:5d} Class={4:2d} Tck/HOV={5:2d} UstmN={6:7d} " \
-                                     "DownN={7:7d} DestN={8:7d} STime={9:8.2f} Total Travel Time={10:8.2f} # of Nodes={11:4d} " \
-                                     "VehType{12:2d} EVAC{13:2d} VOT{14:8.2f} tFlag{15:2d} PrefArrTime{16:7.1f} " \
-                                     "TripPur{17:4d} IniGas{18:5.1f} " \
-                                     "Toll{19:6.1f}\n".format(*data)
-                            output_trajectories.write(record)
-
-                            # Processed the nested data
-                            tag, number_nodes = data[1], data[11]
-                            if tag != 2:
-                                number_nodes -= 1
-
-                            fmt_nodes = str(number_nodes) + 'i'
-                            fmt_times = str(number_nodes) + 'f'
-                            fmt_delays = str(number_nodes) + 'f'
-                            fmt_tolls = str(number_nodes) + 'f'
-                            template_nodes = "{:8d}"*number_nodes
-                            template_times = "{:8f}"*number_nodes
-                            template_delays = "{:8f}"*number_nodes
-                            template_tolls = "{:8f}"*number_nodes
-
-                            data = input_trajectories.read(struct.calcsize(fmt_nodes))
-                            data = struct.unpack(fmt_nodes, data)
-                            record = template_nodes.format(*data)
-                            output_trajectories.write(record)
-
-                            data = input_trajectories.read(struct.calcsize(fmt_times))
-                            data = struct.unpack(fmt_times, data)
-                            record = template_times.format(*data)
-                            output_trajectories.write(record)
-
-                            data = input_trajectories.read(struct.calcsize(fmt_delays))
-                            data = struct.unpack(fmt_delays, data)
-                            record = template_delays.format(*data)
-                            output_trajectories.write(record)
-
-                            data = input_trajectories.read(struct.calcsize(fmt_tolls))
-                            data = struct.unpack(fmt_tolls, data)
-                            record = template_tolls.format(*data)
-                            output_trajectories.write(record)
+        # with open(file=self.input_trajectory_file, mode='rb') as input_trajectories:
+        #     with open(file=self.new_trajectory_file, mode='w', buffering=super().OUTPUT_BUFFER) as output_trajectories:
+        #         eof = False
+        #         while not eof:
+        #             data = input_trajectories.read(struct.calcsize(self.HEADER_PACKING_FMT))
+        #             if not data:
+        #                 eof = True
+        #             else:
+        #                 try:
+        #                     data = struct.unpack(self.HEADER_PACKING_FMT, data)
+        #                 except struct.error:
+        #                     self.state = Codes_Execution_Status.ERROR
+        #                     self.logger.error("Error in reading binary trajectory file")
+        #                     eof = True
+        #                 if self.state == Codes_Execution_Status.OK:
+        #                     record = "Veh #{0:9d} Tag={1:2d} OrigZ={2:5d} DestZ={3:5d} Class={4:2d} Tck/HOV={5:2d} UstmN={6:7d} " \
+        #                              "DownN={7:7d} DestN={8:7d} STime={9:8.2f} Total Travel Time={10:8.2f} # of Nodes={11:4d} " \
+        #                              "VehType{12:2d} EVAC{13:2d} VOT{14:8.2f} tFlag{15:2d} PrefArrTime{16:7.1f} " \
+        #                              "TripPur{17:4d} IniGas{18:5.1f} " \
+        #                              "Toll{19:6.1f}\n".format(*data)
+        #                     output_trajectories.write(record)
+        #
+        #                     # Processed the nested data
+        #                     tag, number_nodes = data[1], data[11]
+        #                     if tag != 2:
+        #                         number_nodes -= 1
+        #
+        #                     fmt_nodes = str(number_nodes) + 'i'
+        #                     fmt_times = str(number_nodes) + 'f'
+        #                     fmt_delays = str(number_nodes) + 'f'
+        #                     fmt_tolls = str(number_nodes) + 'f'
+        #                     template_nodes = "{:8d}"*number_nodes
+        #                     template_times = "{:8f}"*number_nodes
+        #                     template_delays = "{:8f}"*number_nodes
+        #                     template_tolls = "{:8f}"*number_nodes
+        #
+        #                     data = input_trajectories.read(struct.calcsize(fmt_nodes))
+        #                     data = struct.unpack(fmt_nodes, data)
+        #                     record = template_nodes.format(*data)
+        #                     output_trajectories.write(record)
+        #
+        #                     data = input_trajectories.read(struct.calcsize(fmt_times))
+        #                     data = struct.unpack(fmt_times, data)
+        #                     record = template_times.format(*data)
+        #                     output_trajectories.write(record)
+        #
+        #                     data = input_trajectories.read(struct.calcsize(fmt_delays))
+        #                     data = struct.unpack(fmt_delays, data)
+        #                     record = template_delays.format(*data)
+        #                     output_trajectories.write(record)
+        #
+        #                     data = input_trajectories.read(struct.calcsize(fmt_tolls))
+        #                     data = struct.unpack(fmt_tolls, data)
+        #                     record = template_tolls.format(*data)
+        #                     output_trajectories.write(record)
 
         if binary:
             header_length = struct.calcsize(self.HEADER_PACKING_FMT)
@@ -962,8 +962,8 @@ if __name__ == '__main__':
     if DEBUG == 1:
         import os
         execution_path = r"C:\Projects\SWIFT\SWIFT_Project_Data\Controls"
-        control_file = "PlanPrep_SelectTrajectories.ctl"
-        # control_file = "PlanPrep_toTextTrajectories.ctl"
+        # control_file = "PlanPrep_SelectTrajectories.ctl"
+        control_file = "PlanPrep_toTextTrajectories.ctl"
         # control_file = "PlanPrep_AdjustTrajectories.ctl"
         control_file = os.path.join(execution_path, control_file)
         exe = PlanPrep(control_file=control_file)
