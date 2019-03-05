@@ -88,6 +88,8 @@ class NetworkPrep(Execution_Service):
                     number_of_links_read += 1
                     sys.stdout.write("\rNumber of Link Records Read = {:,d}".format(number_of_links_read))
         sys.stdout.write("\n")
+        self.logger.info("Number of Node-Zone Records Read = {:,d}".format(number_of_nodes_read))
+        self.logger.info("Number of Link      Records Read = {:,d}".format(number_of_links_read))
 
     def write_network(self):
         with open(self.new_network_file_path, mode='w', buffering=super().OUTPUT_BUFFER) as output_network:
