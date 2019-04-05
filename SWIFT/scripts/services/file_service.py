@@ -3,7 +3,7 @@ from services.namedlist import namedlist
 from services.sys_defs import SystemFileTypes
 from collections import Sequence
 
-# Record field definitions
+# Network file record field definitions
 fieldsNetworkHeaderRecord = (('number_of_zones', 0), ('number_of_nodes', 0),
                              ('number_of_links', 0), ('number_of_k_sp', 0), ('use_super_zones', 0))
 BaseNetworkHeaderRecord = namedlist('BaseNetworkHeaderRecord', fieldsNetworkHeaderRecord)
@@ -27,6 +27,20 @@ fieldsNetworkLinkRecord = (
                             ('grade', 0),
                         )
 BaseNetworkLinkRecord = namedlist('BaseNetworkLinkRecord', fieldsNetworkLinkRecord)
+
+# Traffic flow model record field definitions
+fieldsTrafficFlowModelRecord = (
+            ('tfmid', 0),
+            ('regime', 0),
+            ('form', 2),
+            ('kcut', 20.0),
+            ('vf', 60.0),
+            ('v0', 40.0),
+            ('kjam', 200.0),
+            ('alpha', 2.5),
+            ('beta', 1.0),
+)
+BaseTrafficFlowModelRecord = namedlist('BaseTrafficFlowModelRecord', fieldsTrafficFlowModelRecord)
 
 
 class RecordMixin:
@@ -150,12 +164,44 @@ class NetworkLinkRecord(RecordMixin, BaseNetworkLinkRecord):
         self.update(values)
 
 
+class TrafficFlowModelRecord(RecordMixin, BaseTrafficFlowModelRecord):
+    __slots__ = ()
+
+    fmt_binary = "=iiiiiiiff"
+    fmt_string = '{:d} {:d} {:d}\n{:d} {:d} {:d} {:d} {:.2f} {:.2f}\n'
+
+    def __repr__(self):
+        field_list = '(' + ', '.join([f+'=%r' for f in self._fields]) + ')'
+        return self.__class__.__name__ + field_list % self.values
+
+    def __str__(self):
+        self.to_string()
+
+    @property
+    def values(self):
+        return tuple(self.__iter__())
+
+    def update(self, values):
+        converted_values = RecordMixin.convert(values, self.fmt_binary)
+        self._update(**dict(zip(self._fields, converted_values)))
+
+    def to_string(self):
+        return self.fmt_string.format(*self.values)
+
+    def from_string(self, values):
+        if not isinstance(values, Sequence) or not isinstance(values[0], str):
+            raise TypeError('Argument must be a tuple of strings')
+        if len(values) != len(self._fields):
+            raise ValueError(f'Argument must be a tuple of size {len(self)}')
+
+        self.update(values)
+
+
 class File:
 
-    def __init__(self, name=None, fmt=SystemFileTypes.FIXED_WIDTH, file_path=None):
+    def __init__(self, name=None, fmt=SystemFileTypes.FIXED_WIDTH):
         self.name = name
         self.fmt = fmt
-        self.file_path = file_path
         self.records = []
 
     def __iter__(self):
@@ -181,3 +227,5 @@ if __name__ == '__main__':
     r_bin = r.to_bytes()
     r2.from_bytes(r_bin)
     print(r2.to_string())
+    r3 = NetworkLinkRecord()
+    print(isinstance(r3, NetworkLinkRecord))

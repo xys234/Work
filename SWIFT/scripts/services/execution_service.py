@@ -90,29 +90,45 @@ class Execution_Service():
         return False
 
     @staticmethod
-    def parse_range_key(value):
+    def parse_integer_list_key(value):
         """
         Parse a range key
         :param value: a string like 1,2,4..5
-        :return: a set with all individual values to get O(1) look-up
+        :return: a list with all individual values
         """
 
-        res = set()
+        res = []
         if ',' in value:
             value_split = value.strip().split(',')
             for v in value_split:
                 v_split = v.split('..')
                 if len(v_split) == 1:
-                    res.add(int(v_split[0]))
+                    res.append(int(v_split[0]))
                 else:
                     lb, hb = int(v_split[0]), int(v_split[1])
                     for k in range(lb, hb+1):
-                        res.add(k)
+                        res.append(k)
         else:
             v_split = value.split('..')
             lb, hb = int(v_split[0]), int(v_split[1])
             for k in range(lb, hb + 1):
-                res.add(k)
+                res.append(k)
+        return res
+
+    @staticmethod
+    def parse_float_list_key(value):
+        """
+
+        :param value:
+        :return:
+        """
+
+        res = []
+        if ',' in value:
+            value_split = value.strip().split(',')
+            res = [float(v) for v in value_split]
+        else:
+            res.append(float(value))
         return res
 
     def initialize_execution(self):
@@ -207,8 +223,10 @@ class Execution_Service():
             elif key.value_type == Key_Value_Types.FILE:
                 if key.key_order > Codes_Key_Thresholds.COMMON_KEY and self.project_dir:
                     key.value = os.path.join(self.project_dir, key.input_value)
-            elif key.value_type == Key_Value_Types.SET:
-                key.value = self.parse_range_key(key.input_value)
+            elif key.value_type == Key_Value_Types.INT_LIST:
+                key.value = self.parse_integer_list_key(key.input_value)
+            elif key.value_type == Key_Value_Types.FLOAT_LIST:
+                key.value = self.parse_float_list_key(key.input_value)
 
     def check_keys(self):
         """
