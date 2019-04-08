@@ -1,13 +1,4 @@
-from enum import IntEnum
-
-
-class KeyValueTypes(IntEnum):
-    INTEGER = 0
-    FLOAT = 1
-    STRING = 2
-    FILE = 3
-    INTEGER_LIST = 4
-    FLOAT_LIST = 5
+from internals.key_db import *
 
 
 class Key(object):
@@ -17,25 +8,39 @@ class Key(object):
 
     """
 
-    def __init__(self, name=None, input_value=None, value_type=None, group=0):
-        self._name = name
+    def __init__(self, key, input_value=None):
+        self._key = key
+        if input_value is None:
+            self._input_value = KEYS_DATABASE[key].default
+        else:
+            self._input_value = input_value
         self._input_value = input_value
-        self._group = group
-        self._type = value_type
-
         self._value = self._input_value
+        self._root = self.key
+        self._group = 0
+
+        parts = self.key.split("_")
+        if parts[-1].isdigit():
+            self._root = self.key[:len(self.key)-len(parts[-1])-1]
+            self._group = int(parts[-1])
+        self._type = KEYS_DATABASE[self.root].value_type
+        self._order = KEYS_DATABASE[self.root].order
 
     def __repr__(self):
-        return "%s(name=%s, input_value=%s, value_type=%s, nested=%s)" % (self.__class__.__name__, self._name,
-                                                                          self._input_value, self._type, self._group)
+        return "%s(key=%s, input_value=%s)" % (self.__class__.__name__, self._key, self._input_value)
+
+    def __str__(self):
+        return "%s(key=%s, input_value=%s, value=%s, root=%s, group=%s)" % (
+            self.__class__.__name__, self._key, self.input_value, self.value, self.root, self.group
+        )
 
     @property
-    def name(self):
-        return self._name
+    def key(self):
+        return self._key
 
-    @name.setter
-    def name(self, value):
-        self._name = value
+    @key.setter
+    def key(self, value):
+        self._key = value
 
     @property
     def input_value(self):
@@ -65,10 +70,24 @@ class Key(object):
     def value(self, val):
         self._value = val
 
-    def convert(self, converter, *args, **kwargs):
-        self._value = converter(self._input_value, args, kwargs)
+    @property
+    def root(self):
+        return self._root
 
+    @root.setter
+    def root(self, value):
+        self._root = value
+
+    @property
+    def value_type(self):
+        return self._type
+
+    @property
+    def order(self):
+        return self._order
 
 if __name__ == '__main__':
-    key1 = Key(name='TRIP_FILE', input_value='fake_path', value_type=KeyValueTypes.FILE)
+    key1 = Key(key='NETWORK_FILE', input_value='fake_path')
     print(key1)
+    key2 = Key(key='TRIP_TABLE_FILE', input_value='fake_path')
+    print(key2)
