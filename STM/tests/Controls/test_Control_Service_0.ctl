@@ -1,5 +1,5 @@
 ## Common_Keys
 
 TITLE						Merge trips
-PROJECT_DIRECTORY           C:\Projects\SWIFT\SWIFT_Project_Data
+PROJECT_DIRECTORY           ..
 REPORT_FILE                      

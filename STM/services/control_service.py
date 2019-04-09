@@ -4,8 +4,8 @@ import re
 from fnmatch import fnmatch
 import itertools
 
-from ..internals.key import Key
-from ..internals.key_db import *
+from internals.key import Key
+from internals.key_db import *
 from services.report_service import ReportService
 
 
@@ -17,6 +17,7 @@ class State(IntEnum):
 
 class ControlService(object):
     def __init__(self, control_file=None):
+        self.exec_dir = os.getcwd()
         self.control_file = control_file
         self.control_files = []
         self.keys = {}
@@ -80,11 +81,13 @@ class ControlService(object):
                         if key.startswith('CONTROL_KEY_FILE'):
                             if fnmatch(value, "@*@"):
                                 value = self.tokens.get(value)  # for case: CONTROL_KEY_FILE  @SOME_FILE_NAME@
+                            value = os.path.join(self.exec_dir, value)
                             self.read_control(value)
-                        elif key.startswith("@"):
+                        elif fnmatch(key, "@*@"):
                             self.tokens[key] = value
                         else:
-                            if key not in KEYS_DATABASE:
+                            root, _ = self.get_root_key(key)
+                            if root not in KEYS_DATABASE:
                                 self.unused_keys.append(key)
                             else:
                                 self.keys[key] = Key(key=key, input_value=value)
@@ -100,18 +103,18 @@ class ControlService(object):
         if 'TITLE' not in self.keys:
             self.keys['TITLE'] = Key('TITLE', input_value='')
 
-        if 'PROJECT_DIRECTORY' not in self.keys:
+        if 'PROJECT_DIRECTORY' not in self.keys or self.keys['PROJECT_DIRECTORY'].input_value is None:
             self.keys['PROJECT_DIRECTORY'] = Key('PROJECT_DIRECTORY', input_value='.')
         self.project_dir = self.keys['PROJECT_DIRECTORY'].value
 
-        if 'REPORT_FILE' not in self.keys:
+        if 'REPORT_FILE' not in self.keys or self.keys['REPORT_FILE'].input_value is None:
             self.keys['REPORT_FILE'] = Key('REPORT_FILE', input_value=os.path.basename(self.control_file)[:-4] + '.prn')
         else:
             if self.keys['REPORT_FILE'].input_value.find('.prn') < 0:
                 self.keys['REPORT_FILE'].value = self.keys['REPORT_FILE'].input_value + ".prn"
         self.report_file = self.keys['REPORT_FILE'].value
 
-        if 'RANDOM_SEED' not in self.keys:
+        if 'RANDOM_SEED' not in self.keys or self.keys['RANDOM_SEED'].input_value is None:
             self.keys['RANDOM_SEED'] = Key('RANDOM_SEED')
 
         self.logger = ReportService(self.report_file).get_logger()
@@ -204,7 +207,9 @@ class ControlService(object):
         return False
 
     def update_key_value(self, key):
-        if key.input_value is not None and key.key != 'INVALID_KEY':
+        if key.input_value is not None:
+            while fnmatch(key.input_value, "@*@"):
+                key.input_value = self.tokens[key.input_value]
             if key.value_type == KeyValueTypes.TIME_RANGE:
                 val = self.parse_time_range(key.input_value)
                 if val[0][0] >= 0:
@@ -323,8 +328,10 @@ if __name__ == '__main__':
         control_file = "test_Control_Service_1.ctl"
         control_file = os.path.join(execution_path, control_file)
         exe = ControlService(control_file=control_file)
-        exe.execute()
+        state = exe.execute()
+        exit(state)
     else:
         from sys import argv
         exe = ControlService(control_file=argv[1])
-        exe.execute()
+        state = exe.execute()
+        exit(state)
