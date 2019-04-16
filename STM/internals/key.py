@@ -11,10 +11,10 @@ class Key(object):
     def __init__(self, key, input_value=None):
         self._key = key
         if input_value is None:
-            self._input_value = KEYS_DATABASE[key].default
+            self._input_value = str(KEYS_DATABASE[key].default)     # input value is always string
         else:
             self._input_value = input_value
-        self._input_value = input_value
+        # self._input_value = input_value
         self._value = self._input_value
         self._root = self.key
         self._group = 0
@@ -85,6 +85,7 @@ class Key(object):
     @property
     def order(self):
         return self._order
+
 
 if __name__ == '__main__':
     key1 = Key(key='NETWORK_FILE', input_value='fake_path')

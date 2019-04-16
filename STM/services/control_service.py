@@ -16,7 +16,14 @@ class State(IntEnum):
 
 
 class ControlService(object):
-    def __init__(self, control_file=None):
+
+    common_keys = (
+        'TITLE', 'REPORT_FILE', 'PROJECT_DIRECTORY', 'RANDOM_SEED'
+    )
+
+    def __init__(self, name=None, control_file=None):
+        self.name = name
+        self.title = None
         self.exec_dir = os.getcwd()
         self.control_file = control_file
         self.control_files = []
@@ -103,18 +110,24 @@ class ControlService(object):
         if 'TITLE' not in self.keys:
             self.keys['TITLE'] = Key('TITLE', input_value='')
 
+        if self.keys['TITLE'].input_value:
+            self.title = self.keys['TITLE'].input_value
+        else:
+            self.title = self.name
+        self.keys['TITLE'].value = self.title
+
         if 'PROJECT_DIRECTORY' not in self.keys or self.keys['PROJECT_DIRECTORY'].input_value is None:
             self.keys['PROJECT_DIRECTORY'] = Key('PROJECT_DIRECTORY', input_value='.')
         self.project_dir = self.keys['PROJECT_DIRECTORY'].value
 
-        if 'REPORT_FILE' not in self.keys or self.keys['REPORT_FILE'].input_value is None:
+        if 'REPORT_FILE' not in self.keys or not self.keys['REPORT_FILE'].input_value:
             self.keys['REPORT_FILE'] = Key('REPORT_FILE', input_value=os.path.basename(self.control_file)[:-4] + '.prn')
         else:
             if self.keys['REPORT_FILE'].input_value.find('.prn') < 0:
                 self.keys['REPORT_FILE'].value = self.keys['REPORT_FILE'].input_value + ".prn"
         self.report_file = self.keys['REPORT_FILE'].value
 
-        if 'RANDOM_SEED' not in self.keys or self.keys['RANDOM_SEED'].input_value is None:
+        if 'RANDOM_SEED' not in self.keys or not self.keys['RANDOM_SEED'].input_value:
             self.keys['RANDOM_SEED'] = Key('RANDOM_SEED')
 
         self.logger = ReportService(self.report_file).get_logger()
@@ -310,10 +323,10 @@ class ControlService(object):
         for key in self.unused_keys:
             self.logger.warning("Unused key {:s}".format(key))
 
-    def execute(self):
+    def execute(self, required_keys=(), optional_keys=()):
         self.read_control(self.control_file)
         self.update_system_keys()
-        self.check_keys()
+        self.check_keys(required_keys, optional_keys)
         self.print_keys()
 
         return self.state
