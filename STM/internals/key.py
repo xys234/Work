@@ -13,8 +13,7 @@ class Key(object):
         if input_value is None:
             self._input_value = str(KEYS_DATABASE[key].default)     # input value is always string
         else:
-            self._input_value = input_value
-        # self._input_value = input_value
+            self._input_value = str(input_value)
         self._value = self._input_value
         self._root = self.key
         self._group = 0

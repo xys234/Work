@@ -16,8 +16,8 @@ class ExecutionService(ControlService):
         self.control_file = control_file
         self.seed = None
 
-    def execute(self, required_keys=(), optional_keys=()):
-        super().execute(required_keys, optional_keys)
+    def execute(self):
+        super().execute()
         self.seed = self.keys['RANDOM_SEED'].value
 
 

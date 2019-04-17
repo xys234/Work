@@ -235,7 +235,7 @@ class TripFileRecord(RecordMixin, BaseTripFileRecord):
         return self.__class__.__name__ + field_list % self.values
 
     def __str__(self):
-        self.to_string()
+        return self.to_string()
 
     @property
     def values(self):

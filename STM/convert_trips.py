@@ -1,7 +1,8 @@
 
 from services.execution_service import ExecutionService
 from services.control_service import State
-from services.utility import bucket_rounding, to_vehicles_helper, parse_origins
+from services.fast_rounding import bucket_rounding, to_vehicles_helper
+from services.file_service import TripFileRecord, File
 
 import time
 import h5py
@@ -94,8 +95,8 @@ class ConvertTrips(ExecutionService):
         'INITIAL_GAS'
     )
 
-    def __init__(self, name='ConvertTrips', control_file='ConvertTrips.ctl'):
-        super().__init__(name, control_file, ConvertTrips.required_keys, ConvertTrips.optional_keys)
+    def __init__(self, name='ConvertTrips', input_control_file='ConvertTrips.ctl'):
+        super().__init__(name, input_control_file, ConvertTrips.required_keys, ConvertTrips.optional_keys)
 
         self.number_of_zones = None
         self.origin_file = None
@@ -126,7 +127,7 @@ class ConvertTrips(ExecutionService):
         self.diurnal_points = 600 * 24
 
         self.vehicle_id = 1
-        self.temp_vehicle = None
+        self.vehicles = File()
 
     def initialize_internal_data(self, group=1):
         """
@@ -142,7 +143,7 @@ class ConvertTrips(ExecutionService):
         if group == 1:
             self.number_of_zones = self.keys['NUMBER_OF_ZONES'].value
             self.origin_file = self.keys['ORIGIN_FILE'].value
-            self.origins = parse_origins(self.origin_file, self.number_of_zones, self.logger)
+            self.origins = self.parse_origins()
             self.vehicle_roster_file = self.keys['NEW_VEHICLE_ROSTER_FILE'].value
 
         suffix = "_" + str(group)
@@ -153,23 +154,62 @@ class ConvertTrips(ExecutionService):
         self.dt_generator = DTGenerator(x=self.diurnal[0], prob=self.diurnal[1],
                                         interp=self.diurnal_points, seed=self.seed)
 
-        self.matrix_name        = self.keys['MATRIX_NAME'+suffix].value
-        self.time_period_range  = self.keys['TIME_PERIOD_RANGE'+suffix].value
-        self.trip_purpose       = self.keys['TRIP_PURPOSE_CODE'+suffix].value
-        self.value_of_time      = self.keys['VALUE_OF_TIME'+suffix].value
-        self.vehicle_occupancy  = self.keys['VEHICLE_OCCUPANCY'+suffix].value
-        self.vehicle_class      = self.keys['VEHICLE_CLASS'+suffix].value
-        self.vehicle_type       = self.keys['VEHICLE_TYPE'+suffix].value
-        self.vehicle_gen_mode   = self.keys['VEHICLE_GENERATION_MODE'+suffix].value
-        self.indifference_band  = self.keys['INDIFFERENCE_BAND'+suffix].value
-        self.number_of_stops    = self.keys['NUMBER_OF_STOPS'+suffix].value
-        self.enroute_info       = self.keys['ENROUTE_INFO'+suffix].value
-        self.compliance_rate    = self.keys['COMPLIANCE_RATE'+suffix].value
-        self.evac_flag          = self.keys['EVACUATION_FLAG'+suffix].value
-        self.activity_duration  = self.keys['ACTIVITY_DURATION'+suffix].value
-        self.arrival_time       = self.keys['ARRIVAL_TIME'+suffix].value
-        self.wait_time          = self.keys['WAIT_TIME'+suffix].value
-        self.initial_gas        = self.keys['INITIAL_GAS'+suffix].value
+        self.matrix_name = self.keys['MATRIX_NAME'+suffix].value
+        self.time_period_range = self.keys['TIME_PERIOD_RANGE'+suffix].value
+        self.trip_purpose = self.keys['TRIP_PURPOSE_CODE'+suffix].value
+        self.value_of_time = self.keys['VALUE_OF_TIME'+suffix].value
+        self.vehicle_occupancy = self.keys['VEHICLE_OCCUPANCY'+suffix].value
+        self.vehicle_class = self.keys['VEHICLE_CLASS'+suffix].value
+        self.vehicle_type = self.keys['VEHICLE_TYPE'+suffix].value
+        self.vehicle_gen_mode = self.keys['VEHICLE_GENERATION_MODE'+suffix].value
+        self.indifference_band = self.keys['INDIFFERENCE_BAND'+suffix].value
+        self.number_of_stops = self.keys['NUMBER_OF_STOPS'+suffix].value
+        self.enroute_info = self.keys['ENROUTE_INFO'+suffix].value
+        self.compliance_rate = self.keys['COMPLIANCE_RATE'+suffix].value
+        self.evac_flag = self.keys['EVACUATION_FLAG'+suffix].value
+        self.activity_duration = self.keys['ACTIVITY_DURATION'+suffix].value
+        self.arrival_time = self.keys['ARRIVAL_TIME'+suffix].value
+        self.wait_time = self.keys['WAIT_TIME'+suffix].value
+        self.initial_gas = self.keys['INITIAL_GAS'+suffix].value
+
+    def parse_origins(self):
+        """
+        Parse dynus-T origin file to get a dictionary of all origins
+        :param origin_file: full path to the origin file
+        :type  string
+        :return:  zone -> [(from_node, to_node, weight)]
+        :type: dict
+        """
+
+        origins = {}
+        with open(self.origin_file, 'r') as dy_origin_file:
+            total_num_origins = 0
+            pos = 0
+            zone = -1
+            for j, line in enumerate(dy_origin_file):
+                record = line.strip().split()
+                if j == 0 or j == pos:
+                    zone, num_origins = int(record[0]), int(record[1])
+                    pos = pos + num_origins + 1
+                else:
+                    total_num_origins += 1
+                    from_node, to_node, weight = int(record[0]), int(record[1]), int(record[2])
+                    if zone not in origins:
+                        origins[zone] = [(from_node, to_node, weight)]
+                    else:
+                        origins[zone].append((from_node, to_node, weight))
+
+        # Scan the origins to find the zones without origins
+        zones_without_origin = []
+        for i in range(self.number_of_zones):
+            if i + 1 not in origins:
+                zones_without_origin.append(i + 1)
+
+        if zones_without_origin:
+            self.logger.warning(
+                '{0:d} zones do not have origins: {1}'.format(len(zones_without_origin), zones_without_origin))
+        self.logger.info("Number of Dynus-T Origin Records = {0:d}".format(total_num_origins))
+        return origins
 
     def rounding(self):
         if self.state == State.ERROR:
@@ -254,31 +294,43 @@ class ConvertTrips(ExecutionService):
         total_trips = od.sum()
         dt_gen = self.dt_generator.dt(period=period, size=total_trips)
         return to_vehicles_helper(od, dt_gen, period, self.origins, vtype, vclass,
-                            self.vehicle_occupancy, self.vehicle_gen_mode, self.number_of_stops, self.enroute_info,
-                            self.indifference_band, self.compliance_rate, self.evac_flag, self.arrival_time,
-                            self.initial_gas, self.wait_time, purp, vot)
+                                  self.vehicle_occupancy, self.vehicle_gen_mode, self.number_of_stops, self.enroute_info,
+                                  self.indifference_band, self.compliance_rate, self.evac_flag, self.arrival_time,
+                                  self.initial_gas, self.wait_time, purp, vot)
 
-    def write_vehicles(self, vehicle_pool):
-        if self.state == Codes_Execution_Status.ERROR:
+    def collect_vehicles(self, vehicle_pool):
+        if self.state == State.ERROR:
             return
 
-        vid = self.vehicle_id
-        open_mode = 'a'
-        if vid == 1:
-            open_mode = 'w'
-        with open(self.temp_vehicle, mode=open_mode, buffering=super().OUTPUT_BUFFER) as f:
-            for i, vals in enumerate(vehicle_pool):
-                vid = self.vehicle_id + i
-                data = (vid, *vals[:-2])
-                record = '%9d%7d%7d%8.1f%6d%6d%6d%6d%6d%6d%8.4f%8.4f%6d%6d%12.8f%8.2f%5d%7.1f%5d%5.1f\n' % (data)
-                f.write(record)
-                record = '%12d%7.2f\n' % (vals[-2:])
-                f.write(record)
+        num_vehicles = 0
+        for i, vals in enumerate(vehicle_pool):
+            trip = TripFileRecord()
+            trip.update((len(self.vehicles)+1, ) + vals)
+            self.vehicles.append(trip)
+            num_vehicles += 1
+        self.logger.info("Vehicles converted                          = {0:,d}".format(num_vehicles))
 
-        self.logger.info("Total vehicles converted                    = {0:,d}".format(vid))
-        self.vehicle_id = vid + 1
+    def write_vehicles(self):
+        if self.state == State.ERROR:
+            return
 
-    def execute(self, required_keys=(), optional_keys=()):
+        with open(self.vehicle_roster_file, mode='w', buffering=super().OUTPUT_BUFFER) as output_veh:
+
+            s = '%12d           1    # of vehicles in the file, Max # of STOPs\n' % (len(self.vehicles))
+            output_veh.write(s)
+            s = "        #   usec   dsec   stime vehcls vehtype ioc #ONode #IntDe info ribf    comp   " + \
+                "izone Evac InitPos    VoT  tFlag pArrTime TP IniGas\n"
+            output_veh.write(s)
+
+            for trip in self.vehicles:
+                output_veh.write(str(trip))
+
+        self.logger.info("Total vehicles converted                    = {0:,d}".format(len(self.vehicles)))
+
+    def write_flat_vehicle_file(self):
+        pass
+
+    def execute(self):
         """
 
         :return:
@@ -286,8 +338,20 @@ class ConvertTrips(ExecutionService):
         The function needs to be module-specific file
 
         """
-        super().execute(required_keys, optional_keys)
+        super().execute()
         start_time = time.time()
+
+        if self.state == State.OK:
+            for i in range(self.highest_group):
+                if self.state == State.OK:
+                    matrix_conversion_start_time = time.time()
+                    self.initialize_internal_data(i + 1)
+                    vehicle_pool = self.to_vehicles()
+                    self.collect_vehicles(vehicle_pool)
+                    self.logger.info(
+                        "Matrix Converted in %.2f minutes" % ((time.time() - matrix_conversion_start_time) / 60))
+
+            self.write_vehicles()
 
         end_time = time.time()
         execution_time = (end_time-start_time)/60.0
@@ -297,7 +361,6 @@ class ConvertTrips(ExecutionService):
         if self.state == State.ERROR:
             self.logger.info("Execution completed with ERROR in %.2f minutes" % execution_time)
         else:
-            self.logger.info("Total vehicles converted               = {0:,d}".format(self.vehicle_id - 1))
             self.logger.info("Execution completed in %.2f minutes" % execution_time)
         exit(self.state)
 
@@ -311,9 +374,9 @@ if __name__ == '__main__':
         # control_file = "ConvertTrips_HBW_AM.ctl"
         control_file = "ConvertTrips_OTHER_AM.ctl"
         control_file = os.path.join(execution_path, control_file)
-        exe = ConvertTrips(control_file=control_file)
+        exe = ConvertTrips(input_control_file=control_file)
         exe.execute()
     else:
         from sys import argv
-        exe = ConvertTrips(control_file=argv[1])
+        exe = ConvertTrips(input_control_file=argv[1])
         exe.execute()

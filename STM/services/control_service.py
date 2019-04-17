@@ -21,11 +21,14 @@ class ControlService(object):
         'TITLE', 'REPORT_FILE', 'PROJECT_DIRECTORY', 'RANDOM_SEED'
     )
 
-    def __init__(self, name=None, control_file=None):
+    required_keys = ()
+    optional_keys = ()
+
+    def __init__(self, name=None, input_control_file=None):
         self.name = name
         self.title = None
         self.exec_dir = os.getcwd()
-        self.control_file = control_file
+        self.control_file = input_control_file
         self.control_files = []
         self.keys = {}
         self.tokens = {}
@@ -174,6 +177,12 @@ class ControlService(object):
             res.append(float(value))
         return res
 
+    @staticmethod
+    def parse_boolean_key(value):
+        if str(value).upper().find('FALSE') >= 0 or str(value).upper() == '0':
+            return False
+        return True
+
     def parse_time_range(self, time_range):
         """
         parse the time range
@@ -239,14 +248,16 @@ class ControlService(object):
                 converter = int
                 key.value = converter(key.input_value)
             elif key.value_type == KeyValueTypes.FILE:
-                if key.order > Offset.NETWORK_KEYS_OFFSET and self.project_dir:
+                if key.order > Offset.NETWORK_KEYS_OFFSET and self.project_dir and len(key.input_value) > 0:
                     key.value = os.path.join(self.project_dir, key.input_value)
-            elif key.value_type == KeyValueTypes.INT_LIST:
+            elif key.value_type == KeyValueTypes.INTEGER_LIST:
                 key.value = self.parse_integer_list_key(key.input_value)
             elif key.value_type == KeyValueTypes.FLOAT_LIST:
                 key.value = self.parse_float_list_key(key.input_value)
+            elif key.value_type == KeyValueTypes.BOOLEAN:
+                key.value = self.parse_boolean_key(key.input_value)
 
-    def check_keys(self, required_keys=(), optional_keys=()):
+    def check_keys(self):
         """
         Populate all keys and check required key;
         :return:
@@ -256,10 +267,10 @@ class ControlService(object):
 
         """
 
-        acceptable_keys = required_keys + optional_keys
+        acceptable_keys = self.required_keys + self.optional_keys
         single_keys = [k for k in acceptable_keys if KEYS_DATABASE[k].group == KeyGroupTypes.SINGLE]
         group_suffixes = ["_"+str(g) for g in range(1, self.highest_group+1)]
-        group_keys = [k for k in acceptable_keys if KEYS_DATABASE[k].group_type == KeyGroupTypes.GROUP]
+        group_keys = [k for k in acceptable_keys if KEYS_DATABASE[k].group == KeyGroupTypes.GROUP]
         full_key_list = single_keys + [k+s for k, s in itertools.product(group_keys, group_suffixes)]
 
         for k in full_key_list:
@@ -282,10 +293,10 @@ class ControlService(object):
 
         # Check required keys for each group. if a value is None, raise an error
         check_key = None
-        found = False
-        for req_k in required_keys:
+        # found = False
+        for req_k in self.required_keys:
             found = False
-            is_group_key = KEYS_DATABASE[req_k].group_type == KeyGroupTypes.GROUP
+            is_group_key = KEYS_DATABASE[req_k].group == KeyGroupTypes.GROUP
             if is_group_key:
                 for g in group_suffixes:
                     check_key = req_k + g
@@ -322,11 +333,13 @@ class ControlService(object):
             self.logger.info("%s = %s" % (k, v))
         for key in self.unused_keys:
             self.logger.warning("Unused key {:s}".format(key))
+        self.logger.info("")
+        self.logger.info("")
 
-    def execute(self, required_keys=(), optional_keys=()):
+    def execute(self):
         self.read_control(self.control_file)
         self.update_system_keys()
-        self.check_keys(required_keys, optional_keys)
+        self.check_keys()
         self.print_keys()
 
         return self.state
@@ -340,11 +353,11 @@ if __name__ == '__main__':
         execution_path = r"C:\Projects\Repo\Work\STM\tests\Controls"
         control_file = "test_Control_Service_1.ctl"
         control_file = os.path.join(execution_path, control_file)
-        exe = ControlService(control_file=control_file)
+        exe = ControlService(input_control_file=control_file)
         state = exe.execute()
         exit(state)
     else:
         from sys import argv
-        exe = ControlService(control_file=argv[1])
+        exe = ControlService(input_control_file=argv[1])
         state = exe.execute()
         exit(state)
