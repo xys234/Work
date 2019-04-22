@@ -1,6 +1,7 @@
 import logging
 import sys
 from logging import FileHandler
+import os
 
 
 class ReportService(object):
@@ -16,14 +17,19 @@ class ReportService(object):
         return console_handler
 
     def get_file_handler(self):
-        file_handler = FileHandler(self._report_name, mode='w')
-        file_handler.setFormatter(self.FORMATTER)
-        return file_handler
+        if os.path.exists(os.path.dirname(self._report_name)):
+            file_handler = FileHandler(self._report_name, mode='w')
+            file_handler.setFormatter(self.FORMATTER)
+            return file_handler
+        else:
+            return None
 
     def get_logger(self):
-        logger = logging.getLogger(self._report_name)
+        logger = logging.getLogger('logger')
         logger.setLevel(logging.DEBUG)
         logger.addHandler(self.get_console_handler())
-        logger.addHandler(self.get_file_handler())
+        fh = self.get_file_handler()
+        if fh is not None:
+            logger.addHandler(fh)
         logger.propagate = False
         return logger

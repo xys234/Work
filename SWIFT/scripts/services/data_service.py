@@ -280,4 +280,24 @@ def read_diurnal_file(diurnal_file, logger=None):
 
 if __name__ == '__main__':
 
-    pass
+    # test the diurnal file interpolation
+    execution_path = r"C:\Projects\SWIFT\SWIFT_Project_Data\Inputs"
+    input_diurnal_file = os.path.join(execution_path, 'Diurnal.csv')
+    output_diurnal_file = os.path.join(execution_path, 'Interpolated_Diurnal.csv')
+
+    hours, probs = read_diurnal_file(input_diurnal_file)
+
+    # DynusT departure time has only 1 decimal place like "7.3". Resolution is 6 minutes.
+    interp_points = int(24 * 60 / 6)
+
+    dt = DTGenerator(hours, probs, interp=interp_points)
+
+    import csv
+
+    with open(output_diurnal_file, mode='w', newline='', buffering=10_000) as output_diurnal:
+        writer = csv.writer(output_diurnal)
+        writer.writerow(('HOUR', 'SHARE'))
+        for h, s in zip(dt._x_interp, dt._prob_interp):
+            record = "{:.6f} {:.6f}".format(h, s)
+            writer.writerow(record.split())
+

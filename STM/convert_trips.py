@@ -362,7 +362,7 @@ class ConvertTrips(ExecutionService):
             self.logger.info("Execution completed with ERROR in %.2f minutes" % execution_time)
         else:
             self.logger.info("Execution completed in %.2f minutes" % execution_time)
-        exit(self.state)
+        return self.state
 
 
 if __name__ == '__main__':
@@ -375,8 +375,9 @@ if __name__ == '__main__':
         control_file = "ConvertTrips_OTHER_AM.ctl"
         control_file = os.path.join(execution_path, control_file)
         exe = ConvertTrips(input_control_file=control_file)
-        exe.execute()
+
     else:
         from sys import argv
         exe = ConvertTrips(input_control_file=argv[1])
-        exe.execute()
+        state = exe.execute()
+        exit(state)
