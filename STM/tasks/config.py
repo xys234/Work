@@ -1,13 +1,21 @@
 from services.report_service import ReportService
 from services.control_service import State
 
+from tasks.task_status import TaskStatus
+from tasks.task import Task
+
 import os
 import sys
 import configparser
 
 
-class ConfigureExecution(object):
-    def __init__(self, base, scen, mode, local_network='FALSE', step_number=1):
+class ConfigureExecution(Task):
+
+    family = 'Setup'
+    step_id = '01'
+
+    def __init__(self, base, scen, mode, local_network='FALSE'):
+        super().__init__()
         self.base = base
         self.scen = scen
         self.mode = mode
@@ -18,15 +26,14 @@ class ConfigureExecution(object):
         else:
             self.local_network = False
 
-        self.step_number = step_number
-        self.state = State.OK
-
         self.config_file = None
 
         self.swift_dir = None
         self.stma_software_dir = None
         self.dynastuio_executable = None
         self.dynust_executable_name = None
+        self.common_dir = None
+
         self.base_dir = None
         self.scen_dir = None
 
@@ -56,9 +63,9 @@ class ConfigureExecution(object):
             return True
 
     def require(self):
-        # current_dir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+
         current_dir = os.getcwd()
-        self.config_file = os.path.join(current_dir, '../../config.cfg')
+        self.config_file = os.path.join(current_dir, '../../STMA_config.cfg')
         if not os.path.exists(self.config_file):
             self.state = State.ERROR
             sys.stderr('STM-A Configuration File {:s} Not Found - STM-A Failed'.format(self.config_file))
@@ -66,7 +73,7 @@ class ConfigureExecution(object):
 
     def run(self):
 
-        if self.state == State.OK:
+        if self.state == TaskStatus.OK:
 
             parser = configparser.ConfigParser()
             parser.read(self.config_file)
@@ -74,6 +81,7 @@ class ConfigureExecution(object):
             self.stma_software_dir = parser['SYSTEM']['STMA_Software_Directory']
             self.dynastuio_executable = parser['SYSTEM']['DynuStudio_Executable']
             self.dynust_executable_name = parser['SYSTEM']['DynusT_Executable_Name']
+            self.common_dir = os.path.join(self.swift_dir, 'CommonData')
 
             self.scen_dir = os.path.join(self.swift_dir, 'Scenarios', self.scen)
             self.logger = ReportService(os.path.join(self.scen_dir, self.scen + '_STM_A.log')).get_logger()
@@ -94,21 +102,24 @@ class ConfigureExecution(object):
                 self.mode = 'QUICK'
 
             self.logger.info('Scenario {:s} Execution Starts'.format(self.scen))
+
+            self.logger.info('')
+            self.logger.info('TASK {:s}_{:s}_{:s}: START'.format(self.family, self.step_id, self.__class__.__name__))
             self.logger.info('')
 
-            self.logger.info('STEP {:d} - {:20s} START'.format(self.step_number, self.__class__.__name__))
             self.logger.info('Scenario Name      = {:s}'.format(self.scen))
             self.logger.info('Baseline Name      = {:s}'.format(self.base))
             self.logger.info('Execution Mode     = {:s}'.format(self.mode))
-            self.logger.info('Use Local Network  = {:s}'.format(self.local_network))
+            self.logger.info('Use Local Network  = {:}'.format(self.local_network))
             self.logger.info('Configuration File = {:s}'.format(self.config_file))
 
     def complete(self):
+        message = 'TASK {:s}_{:s}_{:s}: STATUS = {:15s}'.format(
+            self.family, self.step_id, self.__class__.__name__, str(self.state))
         self.logger.info('')
-        if self.state == State.OK:
-            self.logger.info('STEP {:d} - {:20s} STATUS = COMPLETE'.format(self.step_number, self.__class__.__name__))
-        else:
-            self.logger.info('STEP {:d} - {:20s} STATUS =   FAILED'.format(self.step_number, self.__class__.__name__))
+        self.logger.info('')
+        self.logger.info(message)
+        self.logger.info('')
         self.logger.info('')
 
     def execute(self):

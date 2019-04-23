@@ -1,31 +1,31 @@
-from services.report_service import ReportService
-from services.control_service import State
+from tasks.task_status import TaskStatus
+from tasks.task import Task
 from tasks.config import ConfigureExecution
 
 import os
 
 
-class InitializeEnvironment(object):
+class InitializeEnvironment(Task):
+
+    family = 'Setup'
+    step_id = '02'
 
     STMA_FOLDER_STRUCT = {
-        '01_DynusT': tuple(),
+        '01_DynusT': ('01_Controls', '03_Demand'),
         '02_TrafficPredictor': ('01_Controls', '02_Network', '03_Demand', '04_Results'),
-        '02_Performance_Summarizer': ('01_Controls', '02_Network', '03_Demand', '04_Results'),
+        '03_Performance_Summarizer': ('01_Controls', '02_Network', '03_Demand', '04_Results'),
         '04_KPI_PreProcessor': ('01_Controls', '02_Results')
 
     }
 
-    def __init__(self, step_number=2):
+    def __init__(self, previous_steps):
+        super().__init__(previous_steps=previous_steps)
 
-        self.state = State.OK
-        self.step_number = step_number
         self.logger = None
 
+        self.swift_dir = None
         self.base = None
         self.scen = None
-        self.mode = None
-        self.swift_dir = None
-        self.stma_software_dir = None
         self.base_dir = None
         self.scen_dir = None
 
@@ -51,21 +51,21 @@ class InitializeEnvironment(object):
                 self.logger.info('{:60s} Checked'.format(d))
             return True
 
-    def require(self, configure_execution):
-        if not isinstance(configure_execution, ConfigureExecution):
-            self.state = State.ERROR
-        else:
-            if configure_execution.state == State.OK:
-                self.base = configure_execution.base
-                self.scen = configure_execution.scen
-                self.mode = configure_execution.mode
-                self.swift_dir = configure_execution.swift_dir
-                self.stma_software_dir = configure_execution.stma_software_dir
-                self.base_dir = configure_execution.base_dir
-                self.scen_dir = configure_execution.scen_dir
-                self.logger = configure_execution.logger
-            else:
-                self.state = State.ERROR
+    def require(self):
+        super().require()
+        if self.state == TaskStatus.OK:
+            configure_execution = None
+            for s in self.previous_steps:
+                if isinstance(s, ConfigureExecution):
+                    configure_execution = s
+
+            self.swift_dir = configure_execution.swift_dir
+            self.base = configure_execution.base
+            self.scen = configure_execution.scen
+            self.base_dir = configure_execution.base_dir
+            self.scen_dir = configure_execution.scen_dir
+            self.logger = configure_execution.logger
+        return self.state
 
     def run(self):
         """
@@ -76,43 +76,49 @@ class InitializeEnvironment(object):
         :return:
         """
 
-        if self.state == State.ERROR:
+        if self.state != TaskStatus.OK:
             return
 
-        self.logger.info('STEP {:d} - {:20s} START'.format(self.step_number, self.__class__.__name__))
+        self.logger.info('')
+        self.logger.info('TASK {:s}_{:s}_{:s}: STATUS = START'.format(self.family, self.step_id, self.__class__.__name__))
+        self.logger.info('')
 
         stm_dir = os.path.join(self.scen_dir, 'STM')
         if not self.check_dir(stm_dir):
-            self.state = State.ERROR
+            self.state = TaskStatus.FAIL
             return
 
         stma_dir = os.path.join(stm_dir, 'STM_A')
         if not self.check_dir(stma_dir):
-            self.state = State.ERROR
+            self.state = TaskStatus.FAIL
             return
 
         for topfolder, subfolder in self.STMA_FOLDER_STRUCT.items():
             folder = os.path.join(stma_dir, topfolder)
             self.check_dir(folder, self.scen_dir)
 
+            for s in subfolder:
+                if not self.check_dir(os.path.join(folder, s), self.scen_dir):
+                    self.state = TaskStatus.FAIL
+                    return
+
             if topfolder == '01_DynusT':
                 if not self.check_dir(os.path.join(folder, self.scen), self.scen_dir):
-                    self.state = State.ERROR
+                    self.state = TaskStatus.FAIL
                     return
-            else:
-                for s in subfolder:
-                    if not self.check_dir(os.path.join(folder, s), self.scen_dir):
-                        self.state = State.ERROR
-                        return
 
     def complete(self):
-        if self.state == State.OK:
-            self.logger.info('STEP {:d} - {:20s} STATUS = COMPLETE'.format(self.step_number, self.__class__.__name__))
-        else:
-            self.logger.info('STEP {:d} - {:20s} STATUS =   FAILED'.format(self.step_number, self.__class__.__name__))
+        message = 'TASK {:s}_{:s}_{:s}: STATUS = {:15s}'.format(
+            self.family, self.step_id, self.__class__.__name__, str(self.state))
 
-    def execute(self, configure_execution):
-        self.require(configure_execution)
+        self.logger.info('')
+        self.logger.info('')
+        self.logger.info(message)
+        self.logger.info('')
+        self.logger.info('')
+
+    def execute(self):
+        self.require()
         self.run()
         self.complete()
         return self.state

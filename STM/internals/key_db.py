@@ -63,7 +63,7 @@ class VehicleType(IntEnum):
 SYSTEM_KEYS = {
     'TITLE':                    KeyInfo(KeyValueTypes.STRING,      '', Offset.EXECUTION_KEYS_OFFSET+1, KeyGroupTypes.SINGLE, Help.NO_HELP),
     'REPORT_FILE':              KeyInfo(KeyValueTypes.FILE,        '', Offset.EXECUTION_KEYS_OFFSET+2, KeyGroupTypes.SINGLE, Help.FILE_HELP),
-    'PROJECT_DIRECTORY':        KeyInfo(KeyValueTypes.STRING,      '', Offset.EXECUTION_KEYS_OFFSET+3, KeyGroupTypes.SINGLE, Help.NO_HELP),
+    'PROJECT_DIRECTORY':        KeyInfo(KeyValueTypes.STRING,      './', Offset.EXECUTION_KEYS_OFFSET+3, KeyGroupTypes.SINGLE, Help.NO_HELP),
     'RANDOM_SEED':              KeyInfo(KeyValueTypes.INTEGER,     47,  Offset.EXECUTION_KEYS_OFFSET+4, KeyGroupTypes.SINGLE, Help.NO_HELP),
 }
 
@@ -105,7 +105,6 @@ SETTINGS_KEYS = {
     'RENUMBER_TRIPS': KeyInfo(KeyValueTypes.BOOLEAN, 'TRUE', Offset.SETTINGS_KEYS_OFFSET + 21, KeyGroupTypes.SINGLE, Help.NO_HELP),
 
 }
-
 
 
 KEYS_DATABASE = {**SYSTEM_KEYS, **NETWORK_KEYS, **SETTINGS_KEYS}

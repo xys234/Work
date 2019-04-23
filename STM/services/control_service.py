@@ -87,11 +87,13 @@ class ControlService(object):
                     line = line.strip()
                     if line and not self.is_comment(line):
                         key, value = self.split_key_value(self.strip_comment(line))
-                        key = key.upper()
+                        key, value = key.upper(), value.upper()
                         if key.startswith('CONTROL_KEY_FILE'):
                             if fnmatch(value, "@*@"):
-                                value = self.tokens.get(value)  # for case: CONTROL_KEY_FILE  @SOME_FILE_NAME@
-                            value = os.path.join(self.exec_dir, value)
+                                value = self.tokens.get(value, None)  # for case: CONTROL_KEY_FILE  @SOME_FILE_NAME@
+                            elif fnmatch(value, "%*%"):
+                                value = self.tokens.get(value[1:-1], None)
+                            value = os.path.join(self.exec_dir, value)   # CONTROL_KEY_FILE relative to exec_dir
                             self.read_control(value)
                         elif fnmatch(key, "@*@"):
                             self.tokens[key] = value
@@ -100,6 +102,8 @@ class ControlService(object):
                             if root not in KEYS_DATABASE:
                                 self.unused_keys.append(key)
                             else:
+                                if fnmatch(value, "%*%"):
+                                    value = os.environ.get(value[1:-1])
                                 self.keys[key] = Key(key=key, input_value=value)
                                 if self.keys[key].group > self.highest_group:
                                     self.highest_group = self.keys[key].group
@@ -120,7 +124,7 @@ class ControlService(object):
         self.keys['TITLE'].value = self.title
 
         if 'PROJECT_DIRECTORY' not in self.keys or self.keys['PROJECT_DIRECTORY'].input_value is None:
-            self.keys['PROJECT_DIRECTORY'] = Key('PROJECT_DIRECTORY', input_value='.')
+            self.keys['PROJECT_DIRECTORY'] = Key('PROJECT_DIRECTORY')
         self.project_dir = self.keys['PROJECT_DIRECTORY'].value
 
         if 'REPORT_FILE' not in self.keys or not self.keys['REPORT_FILE'].input_value:
@@ -128,7 +132,7 @@ class ControlService(object):
         else:
             if self.keys['REPORT_FILE'].input_value.find('.prn') < 0:
                 self.keys['REPORT_FILE'].value = self.keys['REPORT_FILE'].input_value + ".prn"
-        self.report_file = self.keys['REPORT_FILE'].value
+        self.report_file = os.path.join(self.project_dir, self.keys['REPORT_FILE'].value)
 
         if 'RANDOM_SEED' not in self.keys or not self.keys['RANDOM_SEED'].input_value:
             self.keys['RANDOM_SEED'] = Key('RANDOM_SEED')
@@ -230,8 +234,10 @@ class ControlService(object):
 
     def update_key_value(self, key):
         if key.input_value is not None:
-            while fnmatch(key.input_value, "@*@"):
-                key.input_value = self.tokens[key.input_value]
+            while key.input_value is not None and fnmatch(key.input_value, "@*@"):
+                key.input_value = self.tokens.get(key.input_value)
+            while key.input_value is not None and fnmatch(key.input_value, "%*%"):
+                key.input_value = self.tokens.get(key.input_value[1:-1])
             if key.value_type == KeyValueTypes.TIME_RANGE:
                 val = self.parse_time_range(key.input_value)
                 if val[0][0] >= 0:
@@ -248,7 +254,7 @@ class ControlService(object):
                 converter = int
                 key.value = converter(key.input_value)
             elif key.value_type == KeyValueTypes.FILE:
-                if key.order > Offset.NETWORK_KEYS_OFFSET and self.project_dir and len(key.input_value) > 0:
+                if key.order > Offset.NETWORK_KEYS_OFFSET and self.project_dir and key.input_value:
                     key.value = os.path.join(self.project_dir, key.input_value)
             elif key.value_type == KeyValueTypes.INTEGER_LIST:
                 key.value = self.parse_integer_list_key(key.input_value)
@@ -316,12 +322,17 @@ class ControlService(object):
 
         # Check existence for files
         for k in self.keys.values():
+            if k.key == 'PROJECT_DIRECTORY':
+                if not os.path.exists(k.value):
+                    self.state = State.ERROR
+                    self.logger.error("Project Directory %s does not exist" % k.value)
+
             if k.value_type == KeyValueTypes.FILE:
                 if self.is_output_file(k.key):
                     if k.value and not os.path.exists(os.path.dirname(k.value)):
                         self.state = State.ERROR
                         self.logger.error("Path %s for %s does not exist" % (os.path.dirname(k.value), k.key))
-                else:
+                elif k.key != 'REPORT_FILE':
                     if k.value and not os.path.exists(k.value):
                         self.state = State.ERROR
                         self.logger.error("File %s for %s does not exist" % (k.value, k.key))
@@ -351,10 +362,15 @@ if __name__ == '__main__':
         import os
 
         execution_path = r"C:\Projects\Repo\Work\STM\tests\Controls"
-        control_file = "test_Control_Service_1.ctl"
+        control_file = "test_Control_Service_4.ctl"
         control_file = os.path.join(execution_path, control_file)
         exe = ControlService(input_control_file=control_file)
-        state = exe.execute()
+        # _environ = os.environ.copy()
+        try:
+            os.environ['ROSTER'] = "AM HR3 HBW.OMX"
+            state = exe.execute()
+        finally:
+            os.environ.pop('ROSTER')
         exit(state)
     else:
         from sys import argv

@@ -1,5 +1,6 @@
 from internals.key_db import *
 
+from fnmatch import fnmatch
 
 class Key(object):
     """
@@ -10,18 +11,24 @@ class Key(object):
 
     def __init__(self, key, input_value=None):
         self._key = key
-        if input_value is None:
-            self._input_value = str(KEYS_DATABASE[key].default)     # input value is always string
-        else:
-            self._input_value = str(input_value)
-        self._value = self._input_value
-        self._root = self.key
-        self._group = 0
 
         parts = self.key.split("_")
         if parts[-1].isdigit():
-            self._root = self.key[:len(self.key)-len(parts[-1])-1]
+            self._root = self.key[:len(self.key) - len(parts[-1]) - 1]
             self._group = int(parts[-1])
+        else:
+            self._root = self.key
+            self._group = 0
+
+        if input_value is None:
+            self._input_value = str(KEYS_DATABASE[self.root].default)     # input value is always string
+        else:
+            self._input_value = str(input_value)
+        if fnmatch(self._input_value, "@*@") or fnmatch(self._input_value, "%*%"):
+            self._value = str(KEYS_DATABASE[self.root].default)
+        else:
+            self._value = self._input_value
+
         self._type = KEYS_DATABASE[self.root].value_type
         self._order = KEYS_DATABASE[self.root].order
 
