@@ -41,7 +41,8 @@ class Key_Value_Types(IntEnum):
     STRING = 4
     TIME_RANGE = 5      # comma-delimited integer range like 0..6, 19..24 or 6..9
     FILE = 6
-    SET = 7             # comma-delimited integers, 1, 3, 4..5 or 1..3,
+    INT_LIST = 7             # comma-delimited integers, 1, 3, 4..5 or 1..3,
+    FLOAT_LIST = 8             # comma-delimited floats,
 
 
 class Key_Group_Types(IntEnum):
@@ -56,7 +57,6 @@ class SystemFileTypes(IntEnum):
 
 # Output file always starts with "NEW_" and ends with "_FILE"
 Key_Info = namedtuple('Key_Info', ('value_type', 'value_default', 'group_type', 'key_order'))
-
 
 
 KEY_DB = {
@@ -111,6 +111,10 @@ KEY_DB = {
     'SELECTION_FORMAT':         Key_Info(Key_Value_Types.STRING,      "COMMA_DELIMITED", Key_Group_Types.NOGROUP, 126),
     'SCENARIO_PARAMETER_FILE':  Key_Info(Key_Value_Types.FILE,        None, Key_Group_Types.NOGROUP, 127),
     'CAPACITY_FACTOR_FILE':     Key_Info(Key_Value_Types.FILE,        None, Key_Group_Types.NOGROUP, 128),
+    'TRAFFIC_FLOW_MODEL_FILE':     Key_Info(Key_Value_Types.FILE,        None, Key_Group_Types.NOGROUP, 129),
+    'NEW_TRAFFIC_FLOW_MODEL_FILE':     Key_Info(Key_Value_Types.FILE,        None, Key_Group_Types.NOGROUP, 130),
+    'AV_WEIGHT':                Key_Info(Key_Value_Types.FLOAT_LIST,        None, Key_Group_Types.NOGROUP, 131),
+    'CV_WEIGHT':                Key_Info(Key_Value_Types.FLOAT,        None, Key_Group_Types.NOGROUP, 132),
 }
 if __name__ == '__main__':
     pass
