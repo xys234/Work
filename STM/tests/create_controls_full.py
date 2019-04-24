@@ -1,14 +1,6 @@
 import h5py
-import numpy as np
 import os
 
-
-def create_test_data(filename, matrix_name, dims=(10,10)):
-    with h5py.File(filename, "w") as f:
-        group = f.create_group('matrices')
-        data = np.random.randint(1, 10, size=dims)
-        print("Total number of input vehicles = {0:d}".format(data.sum()))
-        mat = group.create_dataset(matrix_name, dims, dtype='i', data=data)
 
 def parse_matrix_table(matrix_name, vots):
     """
@@ -119,7 +111,7 @@ if __name__ == '__main__':
             "nhwdai1": 9.6, "nhwdai2": 15.04, "nhwdai3": 20.48, "nhwdai4": 27.52, "nhwdai5": 37.12, "nhws2i12": 21.56,
             "nhws2i3": 35.84, "nhws2i45": 56.56, "nhws3i12": 30.8, "nhws3i3": 51.2, "nhws3i45": 80.8,
             "Cargo": 64.0, "Serv": 40.0, "taxi": 18.94, "exta": 18.94}
-    diurnal_file = r'Inputs\diurnal.csv'
+    diurnal_file = r"%COMMON_DATA%\STM\STM_A\Shared_Inputs\Diurnal_Full.csv"
 
     PURP_MAP = {
         1: 'HBW',
@@ -135,7 +127,7 @@ if __name__ == '__main__':
     for m in matrices:
         key_group = 0
         matrix_file = os.path.join(matrix_folder, m + '.omx')
-        matrix_file_out = os.path.join(r'Inputs\OD\2017', m + '.omx')
+        matrix_file_out = os.path.join(r'%SCEN_DIR%\STM\STM_D', m + '.omx')
         h5 = h5py.File(matrix_file, 'r')
         tables = h5['/matrices/'].keys()
 
@@ -170,15 +162,12 @@ if __name__ == '__main__':
                 key_names = [k+'_'+str(key_group) for k in rotation_keys]
 
                 if key_group == 1:
-                    f.write("TITLE                       {0:s}\n".format(PURP_MAP[purp]+'_'+period.upper()))
-                    f.write(r"PROJECT_DIRECTORY           C:\Projects\SWIFT\SWIFT_Project_Data")
-                    f.write('\n')
-                    f.write("REPORT_FILE                      \n")
-                    f.write('\n')
-                    f.write("NUMBER_OF_ZONES             5263\n")
-                    f.write("ORIGIN_FILE                 Inputs\\Network\\origin.dat\n")
-                    f.write("NEW_VEHICLE_ROSTER_FILE     Outputs\\{0:s}\n".format('Vehicles_'+PURP_MAP[purp]+'_'+period.upper()+'.dat'))
-                    f.write('\n')
+                    f.write('{0:40s}{1:s}\n'.format('TITLE', '%PURPOSE%'))
+                    f.write('{0:40s}{1:s}\n'.format('PROJECT_DIRECTORY', '%SCEN_DIR%'))
+                    f.write('{0:40s}{1:s}\n'.format('REPORT_FILE', ''))
+                    f.write('{0:40s}{1:s}\n'.format('NUMBER_OF_ZONES', '5263'))
+                    f.write('{0:40s}{1:s}\n'.format('ORIGIN_FILE', r'%SCEN_DIR%\STM\STM_A\01_DynusT\%SCEN%\origin.dat'))
+                    f.write('{0:40s}{1:s}\n'.format('NEW_VEHICLE_ROSTER_FILE', r'%SCEN_DIR%\STM\STM_A\01_DynusT\%SCEN%\Vehicles_%PURPOSE%.dat'))
                     f.write('\n')
 
                 f.write('{0:40s}{1:s}\n'.format(key_names[0], matrix_file_out))

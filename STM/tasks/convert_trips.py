@@ -15,7 +15,9 @@ class ConvertTrips(Task):
         super().__init__(previous_steps=previous_steps)
 
     def require(self):
-        pass
+        super().require()
+
+
 
     def run(self):
         pass

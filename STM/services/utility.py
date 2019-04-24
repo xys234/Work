@@ -1,8 +1,6 @@
 import numpy as np
-from numba import njit, jit
 
 
-@njit(cache=True)
 def bucket_rounding(mat):
     if mat.ndim != 2:
         raise ValueError("Input must be a 2-dimensional numpy array")

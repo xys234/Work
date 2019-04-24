@@ -124,7 +124,8 @@ class ConvertTrips(ExecutionService):
         self.origins = None
         self.diurnal = None
         self.dt_generator = None
-        self.diurnal_points = 600 * 24
+        # self.diurnal_points = int(24 * 60 / 6)
+        self.diurnal_points = int(0)
 
         self.vehicle_id = 1
         self.vehicles = File()

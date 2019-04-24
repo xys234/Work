@@ -14,7 +14,7 @@ import csv
 # In[5]:
 
 
-gmaps = googlemaps.Client(key='AIzaSyB6G2u6Iq7MVRqjt6cyYX38aM3rI7iAx0M')
+gmaps = googlemaps.Client(key='')
 
 
 # In[6]:
