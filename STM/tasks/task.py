@@ -12,12 +12,15 @@ class Task(object):
         if not self.step_id:
             self.step_id = "00"
 
-    def require(self):
+    def prepare(self):
         if self.previous_steps:
             for step in self.previous_steps:
                 if step.state != TaskStatus.OK:
                     self.state = TaskStatus.UPSTREAM_FAIL
         return self.state
+
+    def require(self):
+        pass
 
     def run(self):
         pass

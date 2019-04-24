@@ -51,8 +51,8 @@ class InitializeEnvironment(Task):
                 self.logger.info('{:60s} Checked'.format(d))
             return True
 
-    def require(self):
-        super().require()
+    def prepare(self):
+        super().prepare()
         if self.state == TaskStatus.OK:
             configure_execution = None
             for s in self.previous_steps:
@@ -67,6 +67,9 @@ class InitializeEnvironment(Task):
             self.logger = configure_execution.logger
         return self.state
 
+    def require(self):
+        pass
+
     def run(self):
         """
         Initialize exeuction
@@ -78,10 +81,6 @@ class InitializeEnvironment(Task):
 
         if self.state != TaskStatus.OK:
             return
-
-        self.logger.info('')
-        self.logger.info('TASK {:s}_{:s}_{:s}: STATUS = START'.format(self.family, self.step_id, self.__class__.__name__))
-        self.logger.info('')
 
         stm_dir = os.path.join(self.scen_dir, 'STM')
         if not self.check_dir(stm_dir):
@@ -108,6 +107,20 @@ class InitializeEnvironment(Task):
                     return
 
     def complete(self):
+        pass
+
+    def execute(self):
+        self.prepare()
+
+        self.logger.info('')
+        self.logger.info(
+            'TASK {:s}_{:s}_{:s}: STATUS = START'.format(self.family, self.step_id, self.__class__.__name__))
+        self.logger.info('')
+
+        self.require()
+        self.run()
+        self.complete()
+
         message = 'TASK {:s}_{:s}_{:s}: STATUS = {:15s}'.format(
             self.family, self.step_id, self.__class__.__name__, str(self.state))
 
@@ -116,11 +129,6 @@ class InitializeEnvironment(Task):
         self.logger.info(message)
         self.logger.info('')
         self.logger.info('')
-
-    def execute(self):
-        self.require()
-        self.run()
-        self.complete()
         return self.state
 
 

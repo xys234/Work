@@ -4,6 +4,7 @@ from services.control_service import State
 from services.fast_rounding import bucket_rounding, to_vehicles_helper
 from services.file_service import TripFileRecord, File
 
+import sys
 import time
 import h5py
 import os
@@ -33,14 +34,13 @@ class DTGenerator:
                 logger.error("The lengths of input distribution do not match")
             raise ValueError("The lengths of input distribution do not match")
 
-        self._prob_interp = prob
+        self._x_interp = self._x
+        self._prob_interp = self._prob
         if interp:
             self._x_interp = np.linspace(x[0], x[-1], self._interp)
             interpolator = interp1d(self._x, self._prob, kind='cubic')
             self._prob_interp = interpolator(self._x_interp)
             self._prob_interp = self._prob_interp / sum(self._prob_interp)
-        else:
-            self._x_interp = self._x
         np.random.seed(self._seed)
 
     def _select_range(self, period=None):
@@ -224,7 +224,7 @@ class ConvertTrips(ExecutionService):
         self.logger.info("Processing trip table %s" % self.trip_table_file)
         self.logger.info("Processing matrix %s" % self.matrix_name)
 
-        od = h5['/matrices/' + self.matrix_name][:]
+        od = h5['/data/' + self.matrix_name][:]
         total_trips = od.sum()
         self.logger.info("Total vehicles in the matrix                = {0:,.2f}".format(total_trips))
         od = bucket_rounding(od)
@@ -281,7 +281,7 @@ class ConvertTrips(ExecutionService):
                 hour, prob = line.strip().split(',')
                 hours.append(float(hour.strip()))
                 probs.append(float(prob.strip()))
-        return hours, probs
+        return np.array(hours), np.array(probs)
 
     def to_vehicles(self):
 
@@ -363,22 +363,23 @@ class ConvertTrips(ExecutionService):
             self.logger.info("Execution completed with ERROR in %.2f minutes" % execution_time)
         else:
             self.logger.info("Execution completed in %.2f minutes" % execution_time)
-        return self.state
+        return self.state.value
 
 
 if __name__ == '__main__':
 
-    DEBUG = 1
+    DEBUG = 0
     if DEBUG == 1:
         import os
-        execution_path = r"C:\Projects\SWIFT\SWIFT_Project_Data\Controls"
+        # execution_path = r"C:\Projects\SWIFT\SWIFT_Project_Data\Controls"
+        execution_path = r"C:\Projects\SWIFT\SWIFT_Workspace\Scenarios\S04_Full\STM\STM_A\01_DynusT\01_Controls"
         # control_file = "ConvertTrips_HBW_AM.ctl"
         control_file = "ConvertTrips_OTHER_AM.ctl"
         control_file = os.path.join(execution_path, control_file)
         exe = ConvertTrips(input_control_file=control_file)
-
+        state = exe.execute()
     else:
         from sys import argv
         exe = ConvertTrips(input_control_file=argv[1])
         state = exe.execute()
-        exit(state)
+        sys.exit(state)

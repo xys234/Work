@@ -2,11 +2,12 @@ from tasks.task_status import TaskStatus
 from tasks.config import ConfigureExecution
 from tasks.initialize import InitializeEnvironment
 from tasks.check_local_network import CheckLocalNetwork
+from tasks.convert_trips import ConvertTrips
 
 from services.report_service import ReportService
 
 import time
-import logging
+import sys
 
 
 def main(base, scen, mode, local):
@@ -27,6 +28,10 @@ def main(base, scen, mode, local):
     task_check_local_network = CheckLocalNetwork(previous_steps=[task_configure_execution, task_initialize_environment])
     status = task_check_local_network.execute()
 
+    #
+    task_convert_trips = ConvertTrips(previous_steps=[task_configure_execution, task_check_local_network])
+    status = task_convert_trips.execute()
+
     end_time = time.time()
     execution_time = max((start_time - end_time) / 60.0, 0.0)
 
@@ -34,14 +39,22 @@ def main(base, scen, mode, local):
         logger.info('STMA Completed in {:.2f} minutes'.format(execution_time))
     else:
         logger.error('STMA Completed with Error in {:.2f} minutes'.format(execution_time))
-    return status
+    return status.value
 
 
 if __name__ == '__main__':
-    from sys import argv
-    baseline, scenario, execution_mode, local_network = argv[1], argv[2], argv[3], argv[4]
-    # baseline, scenario, execution_mode = "S01_Base", "S01_Quick", "FULL"
-    status = main(baseline, scenario, execution_mode, local_network)
-    exit(status.value)
+    DEBUG = 1
+    if DEBUG:
+        import os
+        exec_dir = r'C:\Projects\SWIFT\SWIFT_Workspace\Software\STM_A'
+        os.chdir(exec_dir)
+        baseline, scenario, execution_mode, local_network = "S04_Base", "S04_Full", "FULL", "TRUE"
+        status = main(baseline, scenario, execution_mode, local_network)
+    else:
+        from sys import argv
+        baseline, scenario, execution_mode, local_network = argv[1], argv[2], argv[3], argv[4]
+        # baseline, scenario, execution_mode = "S01_Base", "S01_Quick", "FULL"
+        status = main(baseline, scenario, execution_mode, local_network)
+        sys.exit(status.value)
 
 

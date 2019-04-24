@@ -213,12 +213,12 @@ class TripPrep(ExecutionService):
             self.logger.info("Number of vehicles processed  = {0:10,d}".format(self.input_vehicle_count))
             self.logger.info("Number of vehicles written    = {0:10,d}".format(self.output_vehicle_count))
             self.logger.info("Execution completed in %.2f minutes" % execution_time)
-        return self.state
+        return self.state.value
 
 
 if __name__ == '__main__':
 
-    DEBUG = 1
+    DEBUG = 0
     if DEBUG == 1:
         import os
         execution_path = r"C:\Projects\SWIFT\SWIFT_Project_Data\Controls"
@@ -227,9 +227,9 @@ if __name__ == '__main__':
         control_file = os.path.join(execution_path, control_file)
         exe = TripPrep(input_control_file=control_file)
         state = exe.execute()
-        exit(state)
+        sys.exit(state)
     else:
         from sys import argv
         exe = TripPrep(input_control_file=argv[1])
         state = exe.execute()
-        exit(state)
+        sys.exit(state)

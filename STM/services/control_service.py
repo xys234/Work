@@ -74,6 +74,34 @@ class ControlService(object):
         else:
             return key_value_pair[0], None
 
+    def replace_tokens(self, s, token='%'):
+        substrs = []
+        token_count, prev = 0, 0
+        for i, ch in enumerate(s):
+            if ch == token:
+                token_count += 1
+                if token_count == 1:
+                    if i > 0:
+                        substrs.append(s[prev:i])
+                        prev = i
+                if token_count == 2:
+                    substrs.append(s[prev:i + 1])
+                    token_count = 0
+                    prev = i + 1
+            if i == len(s) - 1:
+                substrs.append(s[prev:i + 1])
+
+        output = [s for s in substrs if s]
+        if token == '%':
+            for i, substr in enumerate(substrs):
+                if fnmatch(substr, '%*%'):
+                    output[i] = os.environ.get(substr[1:-1], None)
+        if token == '@':
+            for i, substr in enumerate(substrs):
+                if fnmatch(substr, '@*@'):
+                    output[i] = self.tokens.get(substr, None)
+        return ''.join(output)
+
     def read_control(self, control_file):
         if self.state == State.ERROR:
             return self.state
@@ -87,26 +115,32 @@ class ControlService(object):
                     line = line.strip()
                     if line and not self.is_comment(line):
                         key, value = self.split_key_value(self.strip_comment(line))
-                        key, value = key.upper(), value.upper()
-                        if key.startswith('CONTROL_KEY_FILE'):
-                            if fnmatch(value, "@*@"):
-                                value = self.tokens.get(value, None)  # for case: CONTROL_KEY_FILE  @SOME_FILE_NAME@
-                            elif fnmatch(value, "%*%"):
-                                value = self.tokens.get(value[1:-1], None)
-                            value = os.path.join(self.exec_dir, value)   # CONTROL_KEY_FILE relative to exec_dir
-                            self.read_control(value)
-                        elif fnmatch(key, "@*@"):
-                            self.tokens[key] = value
+                        root, _ = self.get_root_key(key)
+                        if root not in KEYS_DATABASE:
+                            self.unused_keys.append(key)
                         else:
-                            root, _ = self.get_root_key(key)
-                            if root not in KEYS_DATABASE:
-                                self.unused_keys.append(key)
+                            if value:
+                                key = key.upper()
+                                if key.startswith('CONTROL_KEY_FILE'):
+
+                                    # for case: CONTROL_KEY_FILE  @SOME_FILE_NAME@
+                                    if fnmatch(value, "*@*@*"):
+                                        value = self.replace_tokens(value, token='@')
+
+                                    elif fnmatch(value, "*%*%*"):
+                                        value = self.replace_tokens(value, token='%')
+                                    value = os.path.join(self.exec_dir, value)   # CONTROL_KEY_FILE relative to exec_dir
+                                    self.read_control(value)
+                                elif fnmatch(key, "*@*@*"):
+                                    self.tokens[key] = value        # Collect program tokens @*@
+                                else:
+                                    if fnmatch(value, "*%*%*"):
+                                        value = self.replace_tokens(value, token='%')
+                                    self.keys[key] = Key(key=key, input_value=value)
+                                    if self.keys[key].group > self.highest_group:
+                                        self.highest_group = self.keys[key].group
                             else:
-                                if fnmatch(value, "%*%"):
-                                    value = os.environ.get(value[1:-1])
-                                self.keys[key] = Key(key=key, input_value=value)
-                                if self.keys[key].group > self.highest_group:
-                                    self.highest_group = self.keys[key].group
+                                self.keys[key] = Key(key=key)
 
     def update_system_keys(self):
         """
@@ -320,6 +354,7 @@ class ControlService(object):
                 self.logger.error("Required key %s not found" % check_key)
                 self.state = State.ERROR
 
+    def check_files(self):
         # Check existence for files
         for k in self.keys.values():
             if k.key == 'PROJECT_DIRECTORY':
@@ -352,26 +387,33 @@ class ControlService(object):
         self.update_system_keys()
         self.check_keys()
         self.print_keys()
+        self.check_files()
 
         return self.state
 
 
 if __name__ == '__main__':
-    DEBUG = 1
+    DEBUG = 0
     if DEBUG == 1:
         import os
 
-        execution_path = r"C:\Projects\Repo\Work\STM\tests\Controls"
-        control_file = "test_Control_Service_4.ctl"
+        # execution_path = r"C:\Projects\Repo\Work\STM\tests\Controls"
+        execution_path = r"C:\Projects\SWIFT\SWIFT_Workspace\Scenarios\S04_Full\STM\STM_A\01_DynusT\01_Controls"
+        control_file = "ConvertTrips_OTHER_AM.ctl"
         control_file = os.path.join(execution_path, control_file)
-        exe = ControlService(input_control_file=control_file)
-        # _environ = os.environ.copy()
+
+        _environ = os.environ.copy()
         try:
-            os.environ['ROSTER'] = "AM HR3 HBW.OMX"
-            state = exe.execute()
+            env = {
+                'SCEN_DIR': r'C:\Projects\SWIFT\SWIFT_Workspace\Scenarios\S04_Full',
+                'SCEN': 'S04_Full',
+                'PURPOSE': 'OTHER_AM'
+            }
+            os.environ.update(env)
+            exe = ControlService(input_control_file=control_file)
+            exe.execute()
         finally:
-            os.environ.pop('ROSTER')
-        exit(state)
+            os.environ.update(_environ)
     else:
         from sys import argv
         exe = ControlService(input_control_file=argv[1])

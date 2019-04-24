@@ -111,7 +111,7 @@ if __name__ == '__main__':
             "nhwdai1": 9.6, "nhwdai2": 15.04, "nhwdai3": 20.48, "nhwdai4": 27.52, "nhwdai5": 37.12, "nhws2i12": 21.56,
             "nhws2i3": 35.84, "nhws2i45": 56.56, "nhws3i12": 30.8, "nhws3i3": 51.2, "nhws3i45": 80.8,
             "Cargo": 64.0, "Serv": 40.0, "taxi": 18.94, "exta": 18.94}
-    diurnal_file = r"%COMMON_DATA%\STM\STM_A\Shared_Inputs\Diurnal_Full.csv"
+    diurnal_file = r"..\..\CommonData\STM\STM_A\Shared_Inputs\Diurnal_Full.csv"
 
     PURP_MAP = {
         1: 'HBW',
@@ -157,17 +157,16 @@ if __name__ == '__main__':
 
             key_group = control_file_map[control_file_suffix]
 
-
             with open(control_file, mode=mode) as f:
                 key_names = [k+'_'+str(key_group) for k in rotation_keys]
 
                 if key_group == 1:
-                    f.write('{0:40s}{1:s}\n'.format('TITLE', '%PURPOSE%'))
+                    f.write('{0:40s}{1:s}\n'.format('TITLE', 'Convert_Vehicle_Roster_%PURPOSE%'))
                     f.write('{0:40s}{1:s}\n'.format('PROJECT_DIRECTORY', '%SCEN_DIR%'))
-                    f.write('{0:40s}{1:s}\n'.format('REPORT_FILE', ''))
+                    f.write('{0:40s}{1:s}\n'.format('REPORT_FILE', r'%SCEN_DIR%\STM\STM_A\01_DynusT\01_Controls\Convert_Vehicle_Roster_%PURPOSE%.prn'))
                     f.write('{0:40s}{1:s}\n'.format('NUMBER_OF_ZONES', '5263'))
                     f.write('{0:40s}{1:s}\n'.format('ORIGIN_FILE', r'%SCEN_DIR%\STM\STM_A\01_DynusT\%SCEN%\origin.dat'))
-                    f.write('{0:40s}{1:s}\n'.format('NEW_VEHICLE_ROSTER_FILE', r'%SCEN_DIR%\STM\STM_A\01_DynusT\%SCEN%\Vehicles_%PURPOSE%.dat'))
+                    f.write('{0:40s}{1:s}\n'.format('NEW_VEHICLE_ROSTER_FILE', r'%SCEN_DIR%\STM\STM_A\01_DynusT\03_Demand\Vehicles_%PURPOSE%.dat'))
                     f.write('\n')
 
                 f.write('{0:40s}{1:s}\n'.format(key_names[0], matrix_file_out))
