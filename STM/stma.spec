@@ -1,9 +1,9 @@
-# -*- mode: python -*- 'trip_prep.py'
+# -*- mode: python -*- 'stma.py'
 
 block_cipher = None
 
 
-a = Analysis(['trip_prep.py'],
+a = Analysis(['stma.py'],
              pathex=['C:\\Projects\\Repo\\Work\\STM'],
              binaries=[],
              datas=[],
@@ -21,7 +21,7 @@ exe = EXE(pyz,
           a.scripts,
           [],
           exclude_binaries=True,
-          name='trip_prep',
+          name='stma',
           debug=False,
           bootloader_ignore_signals=False,
           strip=False,
@@ -33,4 +33,4 @@ coll = COLLECT(exe,
                a.datas,
                strip=False,
                upx=True,
-               name='trip_prep')
+               name='stma')

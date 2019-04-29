@@ -1,6 +1,5 @@
 from tasks.task_status import TaskStatus
 from tasks.task import Task
-from tasks.config import ConfigureExecution
 
 import os
 
@@ -8,18 +7,17 @@ import os
 class InitializeEnvironment(Task):
 
     family = 'Setup'
-    step_id = '02'
 
     STMA_FOLDER_STRUCT = {
-        '01_DynusT': ('01_Controls', '03_Demand'),
+        '01_DynusT': ('01_Controls', '02_Demand', '03_Model'),
         '02_TrafficPredictor': ('01_Controls', '02_Network', '03_Demand', '04_Results'),
         '03_Performance_Summarizer': ('01_Controls', '02_Network', '03_Demand', '04_Results'),
         '04_KPI_PreProcessor': ('01_Controls', '02_Results')
 
     }
 
-    def __init__(self, previous_steps):
-        super().__init__(previous_steps=previous_steps)
+    def __init__(self, previous_steps, step_id='00'):
+        super().__init__(previous_steps, step_id)
 
         self.logger = None
 
@@ -28,6 +26,11 @@ class InitializeEnvironment(Task):
         self.scen = None
         self.base_dir = None
         self.scen_dir = None
+        self.mode = None
+        self.local_network = None
+        self.common_dir = None
+        self.stma_software_dir = None
+        self.threads = 1
 
     def check_dir(self, d, root_dir=None):
         if not os.path.exists(d):
@@ -52,19 +55,19 @@ class InitializeEnvironment(Task):
             return True
 
     def prepare(self):
+        configure_execution = self.previous_steps[0]
+        self.swift_dir = configure_execution.swift_dir
+        self.base = configure_execution.base
+        self.scen = configure_execution.scen
+        self.mode = configure_execution.mode
+        self.base_dir = configure_execution.base_dir
+        self.scen_dir = configure_execution.scen_dir
+        self.logger = configure_execution.logger
+        self.local_network = configure_execution.local_network
+        self.common_dir = configure_execution.common_dir
+        self.stma_software_dir = configure_execution.stma_software_dir
+        self.threads = configure_execution.threads
         super().prepare()
-        if self.state == TaskStatus.OK:
-            configure_execution = None
-            for s in self.previous_steps:
-                if isinstance(s, ConfigureExecution):
-                    configure_execution = s
-
-            self.swift_dir = configure_execution.swift_dir
-            self.base = configure_execution.base
-            self.scen = configure_execution.scen
-            self.base_dir = configure_execution.base_dir
-            self.scen_dir = configure_execution.scen_dir
-            self.logger = configure_execution.logger
         return self.state
 
     def require(self):
@@ -73,9 +76,7 @@ class InitializeEnvironment(Task):
     def run(self):
         """
         Initialize exeuction
-        :param base: baseline name
-        :param scen: scenario name
-        :param mode: execution mode
+
         :return:
         """
 
@@ -98,11 +99,6 @@ class InitializeEnvironment(Task):
 
             for s in subfolder:
                 if not self.check_dir(os.path.join(folder, s), self.scen_dir):
-                    self.state = TaskStatus.FAIL
-                    return
-
-            if topfolder == '01_DynusT':
-                if not self.check_dir(os.path.join(folder, self.scen), self.scen_dir):
                     self.state = TaskStatus.FAIL
                     return
 

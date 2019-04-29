@@ -147,6 +147,8 @@ class ControlService(object):
         Update the system keys
         :return:
         """
+        if self.state == State.ERROR:
+            return self.state
 
         if 'TITLE' not in self.keys:
             self.keys['TITLE'] = Key('TITLE', input_value='')
@@ -267,6 +269,9 @@ class ControlService(object):
         return False
 
     def update_key_value(self, key):
+        if self.state == State.ERROR:
+            return self.state
+
         if key.input_value is not None:
             while key.input_value is not None and fnmatch(key.input_value, "@*@"):
                 key.input_value = self.tokens.get(key.input_value)
@@ -307,6 +312,9 @@ class ControlService(object):
 
         """
 
+        if self.state == State.ERROR:
+            return self.state
+
         acceptable_keys = self.required_keys + self.optional_keys
         single_keys = [k for k in acceptable_keys if KEYS_DATABASE[k].group == KeyGroupTypes.SINGLE]
         group_suffixes = ["_"+str(g) for g in range(1, self.highest_group+1)]
@@ -341,7 +349,7 @@ class ControlService(object):
                 for g in group_suffixes:
                     check_key = req_k + g
                     for name, k in self.keys.items():
-                        if check_key == name and k.value is not None:
+                        if check_key == name and k.input_value is not None and len(k.input_value) > 0:
                             found = True
                             break
             else:
@@ -355,7 +363,9 @@ class ControlService(object):
                 self.state = State.ERROR
 
     def check_files(self):
-        # Check existence for files
+        if self.state == State.ERROR:
+            return self.state
+
         for k in self.keys.values():
             if k.key == 'PROJECT_DIRECTORY':
                 if not os.path.exists(k.value):
@@ -373,6 +383,9 @@ class ControlService(object):
                         self.logger.error("File %s for %s does not exist" % (k.value, k.key))
 
     def print_keys(self):
+        if self.state == State.ERROR:
+            return self.state
+
         keys = [(k, v.value, v.order) for k, v in self.keys.items()]
         keys = sorted(keys, key=lambda k: k[2])
         for k, v, _ in keys:

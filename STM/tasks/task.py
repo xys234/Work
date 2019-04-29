@@ -3,14 +3,16 @@ from tasks.task_status import TaskStatus
 
 class Task(object):
 
-    def __init__(self, previous_steps=None):
+    def __init__(self, previous_steps=None, step_id='00'):
         self.state = TaskStatus.OK
         self.previous_steps = previous_steps
 
         if not self.family:
             self.family = "Task"
-        if not self.step_id:
-            self.step_id = "00"
+        self.step_id = step_id
+
+    def __str__(self):
+        return '_'.join((self.family, self.step_id, self.__class__.__name__))
 
     def prepare(self):
         if self.previous_steps:

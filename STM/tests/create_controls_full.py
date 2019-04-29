@@ -165,8 +165,8 @@ if __name__ == '__main__':
                     f.write('{0:40s}{1:s}\n'.format('PROJECT_DIRECTORY', '%SCEN_DIR%'))
                     f.write('{0:40s}{1:s}\n'.format('REPORT_FILE', r'%SCEN_DIR%\STM\STM_A\01_DynusT\01_Controls\Convert_Vehicle_Roster_%PURPOSE%.prn'))
                     f.write('{0:40s}{1:s}\n'.format('NUMBER_OF_ZONES', '5263'))
-                    f.write('{0:40s}{1:s}\n'.format('ORIGIN_FILE', r'%SCEN_DIR%\STM\STM_A\01_DynusT\%SCEN%\origin.dat'))
-                    f.write('{0:40s}{1:s}\n'.format('NEW_VEHICLE_ROSTER_FILE', r'%SCEN_DIR%\STM\STM_A\01_DynusT\03_Demand\Vehicles_%PURPOSE%.dat'))
+                    f.write('{0:40s}{1:s}\n'.format('ORIGIN_FILE', r'%SCEN_DIR%\STM\STM_A\01_DynusT\03_Model\origin.dat'))
+                    f.write('{0:40s}{1:s}\n'.format('NEW_VEHICLE_ROSTER_FILE', r'%SCEN_DIR%\STM\STM_A\01_DynusT\02_Demand\Vehicles_%PURPOSE%.dat'))
                     f.write('\n')
 
                 f.write('{0:40s}{1:s}\n'.format(key_names[0], matrix_file_out))

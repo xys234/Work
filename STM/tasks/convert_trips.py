@@ -10,7 +10,6 @@ import itertools
 class ConvertTrips(Task):
 
     family = 'DynusT'
-    step_id = '02'
 
     # PURPOSE = ('HBW', 'HNW', 'NHO', 'NHW', 'OTHER')
     PURPOSE = ('OTHER',)
@@ -22,37 +21,42 @@ class ConvertTrips(Task):
         'OV': '8HR'
     }
 
-    def __init__(self, previous_steps):
-        super().__init__(previous_steps=previous_steps)
+    def __init__(self, previous_steps, step_id='00'):
+        super().__init__(previous_steps, step_id=step_id)
 
         self.base = None
         self.scen = None
         self.mode = None
         self.swift_dir = None
         self.stma_software_dir = None
+        self.dynust_dir = None
+        self.dynastuio_executable = None
+        self.dynust_executable_name = None
         self.base_dir = None
         self.scen_dir = None
         self.common_dir = None
+        self.local_network = None
         self.logger = None
 
     def prepare(self):
-        super().prepare()
-
-        if self.state == TaskStatus.OK:
-            configure_execution = None
-            for s in self.previous_steps:
-                if isinstance(s, ConfigureExecution):
-                    configure_execution = s
-
+        configure_execution = self.previous_steps[0]
+        if configure_execution.state == TaskStatus.OK:
+            self.swift_dir = configure_execution.swift_dir
+            self.dynust_dir = configure_execution.dynust_dir
+            self.dynastuio_executable = configure_execution.dynastudio_executable
+            self.dynust_executable_name = configure_execution.dynust_executable_name
             self.base = configure_execution.base
             self.scen = configure_execution.scen
             self.mode = configure_execution.mode
-            self.swift_dir = configure_execution.swift_dir
-            self.stma_software_dir = configure_execution.stma_software_dir
             self.base_dir = configure_execution.base_dir
             self.scen_dir = configure_execution.scen_dir
-            self.common_dir = configure_execution.common_dir
             self.logger = configure_execution.logger
+            self.local_network = configure_execution.local_network
+            self.common_dir = configure_execution.common_dir
+            self.stma_software_dir = configure_execution.stma_software_dir
+            self.threads = configure_execution.threads
+        super().prepare()
+        return self.state
 
     def require(self):
 
@@ -85,7 +89,7 @@ class ConvertTrips(Task):
                 'SCEN_DIR': self.scen_dir,
                 'SCEN': self.scen,
             }
-            env = {**env, **_environ}
+            env = {**env, **_environ}           # the numpy random number generator depends on SYSTEMROOT
             controls[(purpose, period)] = (os.path.join(control_template_dir, control_file), env)
 
         # self.logger.info('{:s} - {:s}'.format('_'.join(k), ' '.join((executable, v[0]))))
@@ -125,9 +129,12 @@ class ConvertTrips(Task):
         os.environ.update(_environ)
 
     def run(self):
+        """
 
-        self.convert_trips()
-        self.merge_trips()
+        :return:
+        """
+        # self.convert_trips()
+        # self.merge_trips()
 
     def complete(self):
         pass

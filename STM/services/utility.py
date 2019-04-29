@@ -1,4 +1,5 @@
 import numpy as np
+from internals.sorted_collection import SortedCollection
 
 
 def bucket_rounding(mat):
@@ -72,4 +73,65 @@ def to_vehicles_helper(od, dt_generator, period, origins, vtype, vclass,
                               purp, gas, dest, wait_time  # 21 fields
 
 
+class Lookup:
+    def __init__(self, x, y, name):
+        """
 
+        :param x:
+        :type  x: list
+        :param y:
+        :type  y: list
+        :param name:
+        :type  name: str
+        """
+
+        if len(x) != len(y):
+            raise ValueError('Input x and y must have equal length')
+
+        self.sorted_collection = SortedCollection(zip(x, y), key=lambda e: e[0])
+        self.name = name
+
+    def lookup(self, x, exact=False):
+        """
+        Find the item (x, value)
+        :param x:
+        :param exact:
+        :return:
+
+        when approximate match is enabled
+        if the item is present, the item will be returned.
+        if the item's key is lower than the smallest key, the smallest key item is returned
+        if the item's key is larger than the largest key, the largest key item is returned
+        if the item's key is within range, a value by linear interpolation is returned
+
+        The returned item is always a tuple (x, value)
+
+        """
+
+        item = None
+        try:
+            item = self.sorted_collection.find(x)
+        except ValueError:
+            pass
+
+        if exact or item:
+            return item
+        else:
+            low, high = None, None
+            try:
+                low = self.sorted_collection.find_lt(x)
+            except ValueError:
+                pass
+
+            try:
+                high = self.sorted_collection.find_gt(x)
+            except ValueError:
+                pass
+
+            if not low and high:
+                return x, high[1]
+            elif low and not high:
+                return x, low[1]
+            else:
+                (x0, y0), (x1, y1) = low, high
+                return x, y0 + (x - x0) * (y1 - y0) / (x1 - x0)

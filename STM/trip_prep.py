@@ -1,6 +1,9 @@
 import time
 import sys
 import csv
+import random
+from math import ceil
+
 from services.execution_service import ExecutionService
 from services.control_service import State
 from services.file_service import TripFileRecord, File
@@ -17,7 +20,8 @@ class TripPrep(ExecutionService):
         'SELECTION_FORMAT',
         'NEW_VEHICLE_ROSTER_FILE',
         'NEW_FLAT_TRIP_FILE',
-        'RENUMBER_TRIPS'
+        'RENUMBER_TRIPS',
+        'SELECTION_PERCENTAGE'
     )
 
     trip_fmt_str_1 = '%9d%7s%7s%9s%6s%6s%6s%6s%6s%6s%12s%12s%6s%6s%20s%10s%5s%8s%5s%6s\n'
@@ -46,6 +50,9 @@ class TripPrep(ExecutionService):
         self.duplicate_trip_index = set()
         self.selections = set()         # input selections; some ids may not be present in the trip file
         self.selection_ids = []         # true selections in internal vehicle ids
+        self.selection_percentage = 100.0
+
+        random.seed(self.seed)
 
     def initialize_internal_data(self, group=1):
         """
@@ -68,6 +75,7 @@ class TripPrep(ExecutionService):
                 self.flat_trip_file = self.keys['NEW_FLAT_TRIP_FILE'].value
 
             self.renumber_trips = self.keys['RENUMBER_TRIPS'].value
+            self.selection_percentage = max(min(100.0, self.keys['SELECTION_PERCENTAGE'].value), 0.1)
 
         suffix = "_" + str(group)
         self.input_vehicle_roster_file = self.keys['VEHICLE_ROSTER_FILE'+suffix].value
@@ -89,8 +97,9 @@ class TripPrep(ExecutionService):
                         line = line.strip() + next(input_roster)
                         self.input_vehicle_count += 1
                         trip_count += 1
-                        sys.stdout.write("\rNumber of Vehicles Read = {:,d} ({:.2f} %)".format(
-                            trip_count, trip_count*100.0/expected_number_of_trips))
+                        if trip_count % 1000 == 0 or trip_count == expected_number_of_trips:
+                            sys.stdout.write("\rNumber of Vehicles Read = {:,d} ({:.2f} %)".format(
+                                trip_count, trip_count*100.0/expected_number_of_trips))
                         trip = TripFileRecord()
                         trip.from_string(line.split())
 
@@ -150,6 +159,11 @@ class TripPrep(ExecutionService):
         else:
             self.selection_ids = list(range(len(self.trips)))   # indices in internal data structure
 
+        if self.selection_percentage < 100.0:
+            sample = random.sample(self.selection_ids,
+                                   ceil(self.selection_percentage / 100.0 * len(self.selection_ids)))
+            self.selection_ids = sorted(sample)
+
     def write_nested_trip_file(self):
         """
         Write the trips in Dynus-T native vehicle roster file format
@@ -188,7 +202,6 @@ class TripPrep(ExecutionService):
         super().execute()
         start_time = time.time()
         if self.state == State.OK:
-            self.print_keys()
             self.initialize_internal_data(group=1)
 
         if self.state == State.OK:
@@ -217,13 +230,13 @@ class TripPrep(ExecutionService):
 
 
 if __name__ == '__main__':
-
-    DEBUG = 0
+    DEBUG = 1
     if DEBUG == 1:
         import os
-        execution_path = r"C:\Projects\SWIFT\SWIFT_Project_Data\Controls"
+        # execution_path = r"C:\Projects\SWIFT\SWIFT_Project_Data\Controls"
+        execution_path = r"C:\Projects\SWIFT\SWIFT_Workspace\Scenarios\S04_Full\STM\STM_A\01_DynusT\01_Controls"
         # control_file = "TripPrep_MergeTrips.ctl"
-        control_file = "TripPrep_SelectTrips.ctl"
+        control_file = "ConvertTrips_OTHER_AM.ctl"
         control_file = os.path.join(execution_path, control_file)
         exe = TripPrep(input_control_file=control_file)
         state = exe.execute()

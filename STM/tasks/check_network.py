@@ -6,10 +6,9 @@ import os
 import shutil
 
 
-class CheckLocalNetwork(Task):
+class CheckNetwork(Task):
 
     family = 'DynusT'
-    step_id = '01'
 
     REQUIRED_NETWORK_FILES = (
         'system.dat',
@@ -28,6 +27,7 @@ class CheckLocalNetwork(Task):
         'CongestionPricingConfig.dat',
         'Incident.dat',
         'Ramp.dat',
+        'Toll.dat',
         'TrafficFlowModel.dat',
         'WorkZone.dat',
         'Epoch.dat',
@@ -42,8 +42,8 @@ class CheckLocalNetwork(Task):
         'LeftCap.dat',
     )
 
-    def __init__(self, previous_steps):
-        super().__init__(previous_steps)
+    def __init__(self, previous_steps, step_id='00'):
+        super().__init__(previous_steps, step_id=step_id)
         self.logger = None
 
         self.base = None
@@ -54,22 +54,26 @@ class CheckLocalNetwork(Task):
         self.base_dir = None
         self.scen_dir = None
         self.local_network = None
+        self.common_dir = None
+        self.threads = 1
 
     def prepare(self):
         super().prepare()
         if self.state == TaskStatus.OK:
-            configure_execution = None
-            for s in self.previous_steps:
-                if isinstance(s, ConfigureExecution):
-                    configure_execution = s
+            configure_execution = self.previous_steps[0]
 
             self.swift_dir = configure_execution.swift_dir
             self.base = configure_execution.base
             self.scen = configure_execution.scen
+            self.mode = configure_execution.mode
             self.base_dir = configure_execution.base_dir
             self.scen_dir = configure_execution.scen_dir
             self.logger = configure_execution.logger
             self.local_network = configure_execution.local_network
+            self.common_dir = configure_execution.common_dir
+            self.stma_software_dir = configure_execution.stma_software_dir
+            self.threads = configure_execution.threads
+
         return self.state
 
     def require(self):
@@ -79,30 +83,31 @@ class CheckLocalNetwork(Task):
         """
         if self.state == TaskStatus.OK:
             if not self.local_network:
-                sources = [os.path.join(self.base_dir, r'STM\STM_A\01_DynusT', self.base, f)
+                sources = [os.path.join(self.base_dir, r'STM\STM_A\01_DynusT', '03_Model', f)
                            for f in self.REQUIRED_NETWORK_FILES]
                 for source in sources:
+                    print_path = os.path.relpath(source, self.scen_dir)
                     if not os.path.isfile(source):
                         self.state = TaskStatus.FAIL
-                        self.logger.error("Base Network File {:s} Not Found".format(source))
+                        self.logger.error("Base Network File {:s} Not Found".format(print_path))
                     else:
-                        self.logger.info("Base Network File {:s} Found".format(source))
+                        self.logger.info("Base Network File {:s} Found".format(print_path))
         return self.state
 
     def run(self):
         if self.state == TaskStatus.OK:
             if not self.local_network:
-                sources = [os.path.join(self.base_dir, r'STM\STM_A\01_DynusT', self.base, f)
+                sources = [os.path.join(self.base_dir, r'STM\STM_A\01_DynusT', '03_Model', f)
                                  for f in self.REQUIRED_NETWORK_FILES]
-                copies = [os.path.join(self.scen_dir, r'STM\STM_A\01_DynusT', self.scen, f)
+                copies = [os.path.join(self.scen_dir, r'STM\STM_A\01_DynusT', '03_Model', f)
                                  for f in self.REQUIRED_NETWORK_FILES]
                 for s, c in zip(sources, copies):
                     shutil.copy2(s, c)
 
-            required_network_files = [os.path.join(self.scen_dir, r'STM\STM_A\01_DynusT', self.scen, f)
+            required_network_files = [os.path.join(self.scen_dir, r'STM\STM_A\01_DynusT', '03_Model', f)
                                       for f in self.REQUIRED_NETWORK_FILES]
             for f in required_network_files:
-                print_path = os.path.relpath(f, os.path.join(self.scen_dir, r'STM\STM_A\01_DynusT', self.scen))
+                print_path = os.path.relpath(f, os.path.join(self.scen_dir, r'STM\STM_A\01_DynusT', '03_Model'))
                 if not os.path.isfile(f):
                     self.logger.error('Scenario Required Network File {:s} Not Found'.format(print_path))
                     self.state = TaskStatus.FAIL

@@ -78,6 +78,9 @@ NETWORK_KEYS = {
     'NEW_FLAT_TRIP_FILE': KeyInfo(KeyValueTypes.FILE, '', Offset.NETWORK_KEYS_OFFSET + 8, KeyGroupTypes.SINGLE, Help.FILE_HELP),
     'SELECTION_FILE': KeyInfo(KeyValueTypes.FILE, '', Offset.NETWORK_KEYS_OFFSET + 9, KeyGroupTypes.SINGLE, Help.FILE_HELP),
     'SELECTION_FORMAT': KeyInfo(KeyValueTypes.STRING, 'COMMA_DELIMITED', Offset.NETWORK_KEYS_OFFSET + 10, KeyGroupTypes.SINGLE, Help.FILE_HELP),
+    'NEW_NETWORK_FILE': KeyInfo(KeyValueTypes.FILE, '', Offset.NETWORK_KEYS_OFFSET + 10, KeyGroupTypes.SINGLE, Help.FILE_HELP),
+    'TRAFFIC_FLOW_MODEL_FILE': KeyInfo(KeyValueTypes.FILE, '', Offset.NETWORK_KEYS_OFFSET + 11, KeyGroupTypes.SINGLE, Help.FILE_HELP),
+    'NEW_TRAFFIC_FLOW_MODEL_FILE': KeyInfo(KeyValueTypes.FILE, '', Offset.NETWORK_KEYS_OFFSET + 12, KeyGroupTypes.SINGLE, Help.FILE_HELP),
 
 }
 
@@ -103,6 +106,11 @@ SETTINGS_KEYS = {
     'INITIAL_GAS': KeyInfo(KeyValueTypes.FLOAT, 0.0, Offset.SETTINGS_KEYS_OFFSET + 19, KeyGroupTypes.GROUP, Help.NO_HELP),
     'START_TRIP_NUMBER': KeyInfo(KeyValueTypes.INTEGER, 1, Offset.SETTINGS_KEYS_OFFSET + 20, KeyGroupTypes.SINGLE, Help.NO_HELP),
     'RENUMBER_TRIPS': KeyInfo(KeyValueTypes.BOOLEAN, 'TRUE', Offset.SETTINGS_KEYS_OFFSET + 21, KeyGroupTypes.SINGLE, Help.NO_HELP),
+    'SELECTION_PERCENTAGE': KeyInfo(KeyValueTypes.FLOAT, 100.0, Offset.SETTINGS_KEYS_OFFSET + 22, KeyGroupTypes.SINGLE, Help.NO_HELP),
+    'SCENARIO_PARAMETER_FILE': KeyInfo(KeyValueTypes.FILE, '', Offset.SETTINGS_KEYS_OFFSET + 23, KeyGroupTypes.SINGLE, Help.NO_HELP),
+    'CAPACITY_FACTOR_FILE': KeyInfo(KeyValueTypes.FILE, '', Offset.SETTINGS_KEYS_OFFSET + 24, KeyGroupTypes.SINGLE, Help.NO_HELP),
+    'AV_WEIGHT': KeyInfo(KeyValueTypes.FLOAT_LIST, '1.0, 1.0, 1.0', Offset.SETTINGS_KEYS_OFFSET + 25, KeyGroupTypes.SINGLE, Help.NO_HELP),
+    'CV_WEIGHT': KeyInfo(KeyValueTypes.FLOAT, 1.0, Offset.SETTINGS_KEYS_OFFSET + 26, KeyGroupTypes.SINGLE, Help.NO_HELP),
 
 }
 
