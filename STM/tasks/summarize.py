@@ -71,7 +71,7 @@ class SummarizePlans(Task):
             'SCEN_DIR': self.scen_dir,
             'COMMONDATA': self.common_dir,
             'NUMBER_THREADS': str(self.threads),
-            'PLANS': plans,
+            'PLAN': plans,
             'PERFORMANCE': performance
         }
         env = {**env, **_environ}
@@ -81,7 +81,9 @@ class SummarizePlans(Task):
         for exitcode in exitcodes:
             if exitcode == 1:
                 self.state = TaskStatus.FAIL
-                self.logger.error('Summarize Link Performance Failed')
+                self.logger.error('Summarizing Link Performance Failed')
+        if self.state == TaskStatus.OK:
+            self.logger.info('Summarizing Link Performance Completed')
 
         os.environ.update(_environ)
 
@@ -97,7 +99,7 @@ class SummarizePlans(Task):
 
         :return:
         """
-        # self.summarize_perf()
+        self.summarize_perf()
 
     def complete(self):
         pass

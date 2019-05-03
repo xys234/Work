@@ -23,18 +23,19 @@ def workflow(base, scen, mode, local, config_file):
     task_initialize_environment = InitializeEnvironment(previous_steps=[task_configure_execution], step_id='01')
     task_check_network = CheckNetwork(previous_steps=[task_configure_execution, task_initialize_environment],
                                       step_id='02')
+    task_modify_network = UpdateNetwork(previous_steps=[task_configure_execution, task_check_network], step_id='03')
 
     wf = OrderedDict(
         {
             'ConfigureExecution': task_configure_execution,
             'InitializeEnvironment': task_initialize_environment,
             'CheckNetwork': task_check_network,
+            'ModifyNetwork': task_modify_network
         }
     )
 
     if mode.upper() == 'FULL':
-        task_convert_trips = ConvertTrips(previous_steps=[task_configure_execution, task_check_network], step_id='03')
-        task_modify_network = UpdateNetwork(previous_steps=[task_configure_execution, task_check_network], step_id='04')
+        task_convert_trips = ConvertTrips(previous_steps=[task_configure_execution, task_check_network], step_id='04')
         task_full_predict = FullPredict(previous_steps=[task_configure_execution, task_convert_trips,
                                                         task_modify_network], step_id='05')
         task_init_internals = InitInternals(previous_steps=[task_configure_execution, task_full_predict], step_id='06')
@@ -49,13 +50,13 @@ def workflow(base, scen, mode, local, config_file):
         wf['KPIPreProcess'] = task_grids
     else:
         task_init_internals = InitInternals(previous_steps=[task_configure_execution, task_check_network],
-                                            step_id='03')
-        task_summarize_internals = SummarizePlans(previous_steps=[task_configure_execution, task_init_internals],
                                             step_id='04')
-        task_quick_predict = QuickPredict(previous_steps=[task_configure_execution, task_init_internals], step_id='05')
+        task_summarize_internals = SummarizePlans(previous_steps=[task_configure_execution, task_init_internals],
+                                            step_id='05')
+        task_quick_predict = QuickPredict(previous_steps=[task_configure_execution, task_init_internals], step_id='06')
         task_summarize_scenario = SummarizePlans(previous_steps=[task_configure_execution, task_quick_predict],
-                                                 step_id='06')
-        task_grids = ProcessGrids(previous_steps=[task_configure_execution, task_summarize_scenario], step_id='07')
+                                                 step_id='07')
+        task_grids = ProcessGrids(previous_steps=[task_configure_execution, task_summarize_scenario], step_id='08')
 
         wf['InitializeInternals'] = task_init_internals
         wf['SummarizeInternals'] = task_summarize_internals
@@ -104,13 +105,13 @@ def main(base, scen, mode, local, config_file):
 
 
 if __name__ == '__main__':
-    DEBUG = 1
+    DEBUG = 0
     if DEBUG:
         import os
         exec_dir = r'C:\Projects\SWIFT\SWIFT_Workspace\Software\STM_A'
         config_file = r'C:\Projects\SWIFT\SWIFT_Workspace\CommonData\STM\STM_A\STMA_config.cfg'
-        # baseline, scenario, execution_mode, local_network = "Scenario_S0", "Scenario_S4_Quick", "Quick", "False"
-        baseline, scenario, execution_mode, local_network = "Scenario_S0", "Scenario_S4_Full", "Full", "False"
+        baseline, scenario, execution_mode, local_network = "Scenario_S0", "Scenario_S4_Quick", "Quick", "False"
+        # baseline, scenario, execution_mode, local_network = "Scenario_S0", "Scenario_S4_Full", "Full", "False"
         status = main(baseline, scenario, execution_mode, local_network, config_file)
         sys.exit(status)
     else:

@@ -1,6 +1,5 @@
 from tasks.task_status import TaskStatus
 from tasks.task import Task
-from tasks.config import ConfigureExecution
 
 import os
 import subprocess
@@ -11,8 +10,8 @@ class ConvertTrips(Task):
 
     family = 'DynusT'
 
-    # PURPOSE = ('HBW', 'HNW', 'NHO', 'NHW', 'OTHER')
-    PURPOSE = ('OTHER',)
+    PURPOSE = ('HBW', 'HBNW', 'NHO', 'NHW', 'OTHER')
+    # PURPOSE = ('OTHER',)
     PERIOD = ('AM', 'MD', 'PM', 'OV')
     PERIOD_LEN = {
         'AM': '3HR',
@@ -60,11 +59,16 @@ class ConvertTrips(Task):
 
     def require(self):
 
+        if self.state != TaskStatus.OK:
+            return
         # Check input matrices
         for purpose, period in itertools.product(self.PURPOSE, self.PERIOD):
             period_len = self.PERIOD_LEN[period]
-            matrix = ' '.join(['OD', period+period_len, purpose, 'Vehicles.OMX'])
-            matrix = os.path.join(self.scen_dir, 'STM/STM_D', matrix)
+            purpose_mask = purpose
+            if purpose in ('NHW', 'NHO'):
+                purpose_mask = 'NHB'
+            matrix = ' '.join(['OD', period+period_len, purpose_mask, 'Vehicles.OMX'])
+            matrix = os.path.join(self.scen_dir, 'STM/STM_D/Outputs_SWIFT', matrix)
             if os.path.isfile(matrix):
                 self.logger.info('{matrix:s} Checked'.format(matrix=matrix))
             else:

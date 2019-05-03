@@ -91,9 +91,10 @@ class QuickPredict(Task):
                 if purpose in ('NHO', 'NHW'):
                     pp = 'NHB'
                 instruction_file = os.path.join(self.scen_dir,
-                                                r'STM/STM_D', ' '.join(('DIFF OD', period+self.PERIOD_LEN[period],
-                                                                        pp, 'Vehicles.MAT'
-                                                                        )))
+                                                r'STM/STM_D/Outputs_SWIFT',
+                                                ' '.join(('DIFF OD', period+self.PERIOD_LEN[period],
+                                                          pp, 'Vehicles.MAT'
+                                                          )))
                 if not os.path.isfile(instruction_file):
                     self.state = TaskStatus.FAIL
                     self.logger.error('Required STM_D Input {:s} Not Found'.format(instruction_file))
@@ -134,6 +135,8 @@ class QuickPredict(Task):
             if exitcode == 1:
                 self.state = TaskStatus.FAIL
                 self.logger.error('Estimate Induced Demand for {:s} Failed'.format('_'.join(pp)))
+            else:
+                self.logger.info('Estimate Induced Demand for {:s} Completed'.format('_'.join(pp)))
 
     def merge_induced_trips(self):
         if self.state == TaskStatus.OK:
@@ -153,7 +156,7 @@ class QuickPredict(Task):
             if exitcode == 1:
                 self.state = TaskStatus.FAIL
                 self.logger.error('Merge Induced Demand Failed')
-            if self.state != TaskStatus.OK:
+            if self.state == TaskStatus.OK:
                 self.logger.info('Merge Induced Demand Completed')
 
     def assign_induced_trips(self):
@@ -206,6 +209,8 @@ class QuickPredict(Task):
             if exitcode == 1:
                 self.state = TaskStatus.FAIL
                 self.logger.error('Estimate Reduced Demand for {:s} Failed'.format('_'.join(pp)))
+            else:
+                self.logger.info('Estimate Reduced Demand for {:s} Completed'.format('_'.join(pp)))
 
         if self.state == TaskStatus.OK:
             self.logger.info('Estimate Reduced Demand Completed')
@@ -261,11 +266,11 @@ class QuickPredict(Task):
 
         :return:
         """
-        # self.estimate_induced_trips()
+        self.estimate_induced_trips()
         self.merge_induced_trips()
-        # self.assign_induced_trips()
-        # self.estimate_reduced_selection()
-        # self.merge_reduce_selection()
+        self.assign_induced_trips()
+        self.estimate_reduced_selection()
+        self.merge_reduce_selection()
         self.merge()
 
     def complete(self):

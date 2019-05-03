@@ -54,7 +54,7 @@ class InitInternals(Task):
             trajectory_dir = self.scen_dir
             if self.mode == 'QUICK':
                 trajectory_dir = self.base_dir
-            trajectory_file = os.path.join(trajectory_dir, r'STM/STM_A/01_DynusT/03_Model', 'vehtrajectory.itf')
+            trajectory_file = os.path.join(trajectory_dir, r'STM\STM_A\01_DynusT\03_Model', 'vehtrajectory.itf')
             if not os.path.isfile(trajectory_file):
                 self.state = TaskStatus.FAIL
                 self.logger.info('{:s} Mode. Required Trajectory File {:s} Not Found'.format(self.mode,
@@ -67,7 +67,7 @@ class InitInternals(Task):
         if self.state != TaskStatus.OK:
             return
 
-        control_template_dir = os.path.join(self.common_dir, 'STM/STM_A/Control_Template')
+        control_template_dir = os.path.join(self.common_dir, r'STM\STM_A\Control_Template')
         control_file = os.path.join(control_template_dir, 'DynusTPrep.ctl')
         executable = os.path.join(self.stma_software_dir, 'DynusTPrep.exe')
         _environ = dict(os.environ)
@@ -96,6 +96,9 @@ class InitInternals(Task):
                 self.state = TaskStatus.FAIL
                 self.logger.error('Conversion to Internal Data Failed')
 
+        if self.state == TaskStatus.OK:
+            self.logger.info('Conversion to Internal Data Completed')
+
         os.environ.update(_environ)
 
     def run(self):
@@ -103,7 +106,7 @@ class InitInternals(Task):
 
         :return:
         """
-        # self.convert_network_and_plans()
+        self.convert_network_and_plans()
 
     def complete(self):
         pass

@@ -40,6 +40,7 @@ class CheckNetwork(Task):
         'StopCap4Way.dat',
         'StopCap2Way.dat',
         'LeftCap.dat',
+        'demand.dat'
     )
 
     def __init__(self, previous_steps, step_id='00'):
@@ -86,12 +87,13 @@ class CheckNetwork(Task):
                 sources = [os.path.join(self.base_dir, r'STM\STM_A\01_DynusT', '03_Model', f)
                            for f in self.REQUIRED_NETWORK_FILES]
                 for source in sources:
-                    print_path = os.path.relpath(source, self.scen_dir)
-                    if not os.path.isfile(source):
-                        self.state = TaskStatus.FAIL
-                        self.logger.error("Base Network File {:s} Not Found".format(print_path))
-                    else:
-                        self.logger.info("Base Network File {:s} Found".format(print_path))
+                    if source.find('demand.dat') < 0:
+                        print_path = os.path.relpath(source, self.scen_dir)
+                        if not os.path.isfile(source):
+                            self.state = TaskStatus.FAIL
+                            self.logger.error("Base Network File {:s} Not Found".format(print_path))
+                        else:
+                            self.logger.info("Base Network File {:s} Found".format(print_path))
         return self.state
 
     def run(self):
@@ -102,17 +104,23 @@ class CheckNetwork(Task):
                 copies = [os.path.join(self.scen_dir, r'STM\STM_A\01_DynusT', '03_Model', f)
                                  for f in self.REQUIRED_NETWORK_FILES]
                 for s, c in zip(sources, copies):
-                    shutil.copy2(s, c)
+                    if s.find('demand.dat') < 0:
+                        shutil.copy2(s, c)
 
             required_network_files = [os.path.join(self.scen_dir, r'STM\STM_A\01_DynusT', '03_Model', f)
                                       for f in self.REQUIRED_NETWORK_FILES]
             for f in required_network_files:
-                print_path = os.path.relpath(f, os.path.join(self.scen_dir, r'STM\STM_A\01_DynusT', '03_Model'))
-                if not os.path.isfile(f):
-                    self.logger.error('Scenario Required Network File {:s} Not Found'.format(print_path))
-                    self.state = TaskStatus.FAIL
+                if f.find('demand.dat') >= 0:
+                    with open(f, 'w') as temp_demand:
+                        pass
+                    self.logger.info('Empty Scenario Required Network File {:s} Created'.format(f))
                 else:
-                    self.logger.info('Scenario Required Network File {:s} Found'.format(print_path))
+                    print_path = os.path.relpath(f, os.path.join(self.scen_dir, r'STM\STM_A\01_DynusT', '03_Model'))
+                    if not os.path.isfile(f):
+                        self.logger.error('Scenario Required Network File {:s} Not Found'.format(print_path))
+                        self.state = TaskStatus.FAIL
+                    else:
+                        self.logger.info('Scenario Required Network File {:s} Found'.format(print_path))
 
     def complete(self):
         pass

@@ -64,7 +64,7 @@ class UpdateNetwork(Task):
             'NUMBER_THREADS': str(self.threads),
         }
         env = {**env, **_environ}
-        processes = [subprocess.Popen(args=[executable, '-k', '-n', control_file], env=env)]
+        processes = [subprocess.Popen(args=[executable, control_file], env=env)]
         exitcodes = [p.wait() for p in processes]
 
         for exitcode in exitcodes:
@@ -79,7 +79,7 @@ class UpdateNetwork(Task):
 
         :return:
         """
-        self.update_network()
+        # self.update_network()
 
     def complete(self):
         pass

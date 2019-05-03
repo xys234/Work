@@ -123,9 +123,9 @@ class ProcessGrids(Task):
 
         :return:
         """
-        # self.generate_network_shapefiles()
-        # self.generate_performance_shapefiles()
-        # self.generate_grids()
+        self.generate_network_shapefiles()
+        self.generate_performance_shapefiles()
+        self.generate_grids()
 
     def complete(self):
         pass

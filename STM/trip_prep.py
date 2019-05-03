@@ -119,11 +119,15 @@ class TripPrep(ExecutionService):
                                     .format(trip_count, expected_number_of_trips))
             self.logger.info("Number of Vehicles Read in Trip Roster {:d} = {:,d}".format(g, trip_count))
 
+        # Sort the trips based on departure time
+        self.logger.info("Sorting trips based on departure time")
+        self.trips = sorted(self.trips, key=lambda t: t.stime)
+
         # Renumber the trips
         if self.renumber_trips:
-            trip_id = self.start_id
             for i, trip in enumerate(self.trips):
-                trip.vehid = trip_id + i
+                trip.vehid = self.start_id + i
+
         else:
             for v in self.duplicate_trip_index:
                 self.logger.warning("Duplicate Vehicle ID = {:d}".format(v))
@@ -233,10 +237,10 @@ if __name__ == '__main__':
     DEBUG = 1
     if DEBUG == 1:
         import os
-        # execution_path = r"C:\Projects\SWIFT\SWIFT_Project_Data\Controls"
-        execution_path = r"C:\Projects\SWIFT\SWIFT_Workspace\Scenarios\S04_Full\STM\STM_A\01_DynusT\01_Controls"
-        # control_file = "TripPrep_MergeTrips.ctl"
-        control_file = "ConvertTrips_OTHER_AM.ctl"
+        execution_path = r"C:\Projects\SWIFT\SWIFT_Project_Data\Controls"
+        # execution_path = r"C:\Projects\SWIFT\SWIFT_Workspace\Scenarios\S04_Full\STM\STM_A\01_DynusT\01_Controls"
+        control_file = "TripPrep_MergeTrips.ctl"
+        # control_file = "ConvertTrips_OTHER_AM.ctl"
         control_file = os.path.join(execution_path, control_file)
         exe = TripPrep(input_control_file=control_file)
         state = exe.execute()

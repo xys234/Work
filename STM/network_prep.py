@@ -82,7 +82,7 @@ class NetworkPrep(ExecutionService):
         self.network_file = File(name='Network')
 
         # Backup the existing network
-        backup_network_file = os.path.join(os.path.dirname(self.network_file_path), 'network_Input.dat')
+        backup_network_file = os.path.join(os.path.dirname(self.network_file_path), 'network_Input.bak')
         if os.path.normcase(backup_network_file) != os.path.normcase(self.network_file_path):
             shutil.copy2(self.network_file_path, backup_network_file)
 
@@ -106,6 +106,7 @@ class NetworkPrep(ExecutionService):
                     self.network_file.append(record)
                     number_of_nodes_read += 1
                     sys.stdout.write("\rNumber of Node-Zone Records Read = {:,d}".format(number_of_nodes_read))
+                    sys.stdout.write("\n")
 
                 elif number_of_nodes_read == self.number_of_nodes and number_of_links_read < self.number_of_links:
                     record = NetworkLinkRecord()
@@ -137,7 +138,7 @@ class NetworkPrep(ExecutionService):
         self.traffic_flow_model_file = File(name='TrafficFlowModel')
 
         # Backup the existing traffic flow model
-        backup_tfm_file = os.path.join(os.path.dirname(self.traffic_flow_model_file_path), 'TrafficFlowModel_Input.dat')
+        backup_tfm_file = os.path.join(os.path.dirname(self.traffic_flow_model_file_path), 'TrafficFlowModel_Input.bak')
         if os.path.normcase(backup_tfm_file) != os.path.normcase(self.traffic_flow_model_file_path):
             shutil.copy2(self.traffic_flow_model_file_path, backup_tfm_file)
 
@@ -154,11 +155,11 @@ class NetworkPrep(ExecutionService):
         self.logger.info("Number of Traffic Flow Models Read = {:,d}".format(number_of_tfm_read))
 
     def modify_traffic_flow_models(self):
-        _, alpha = self.lk_alpha.lookup(self.cav_percent, exact=False)
+        _, alpha_factor = self.lk_alpha.lookup(self.cav_percent, exact=False)
         # _, beta = self.lk_beta.lookup(self.cav_percent, exact=False)
 
         for record in self.traffic_flow_model_file:
-            record.alpha = alpha
+            record.alpha = record.alpha * alpha_factor
             # record.beta = beta
 
     def write_traffic_flow_models(self):

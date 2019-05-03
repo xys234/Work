@@ -26,10 +26,15 @@ class FullPredict(Task):
         'miva2017.exe',
     )
 
-    COMPLETE_RUN_MARKER = {
-        'SummaryStat.dat'
+    REQUIRED_DEMAND_FILES = (
+        'demand.dat',
+        'vehicle.dat'
+    )
+
+    COMPLETE_RUN_MARKER = (
+        'SummaryStat.dat',
         'VehTrajectory.itf'
-    }
+    )
 
     def __init__(self, previous_steps, step_id='00'):
         super().__init__(previous_steps)
@@ -78,7 +83,8 @@ class FullPredict(Task):
 
         :return:
         """
-
+        if self.state != TaskStatus.OK:
+            return
         # Check if DynusT run has already been made
         model_dir = os.path.join(self.scen_dir, r'STM\STM_A\01_DynusT\03_Model')
         for f in self.COMPLETE_RUN_MARKER:
@@ -96,35 +102,44 @@ class FullPredict(Task):
                 self.logger.error('Required DynusT Installation Not Found'.format(self.dynust_dir))
             else:
                 dest = os.path.join(self.scen_dir, r'STM\STM_A\01_DynusT\03_Model')
-                for e in self.REQUIRED_LIBRARY + (self.dynust_executable_name,):
+                for e in self.REQUIRED_LIBRARY + (self.dynust_executable_name+'.exe',):
                     check_file = os.path.join(self.dynust_dir, r'_exe\DynusT', e)
-                    if not os.path.isfile(check_file):
+                    if os.path.isfile(check_file):
                         shutil.copy2(check_file, os.path.join(dest, e))
-                        self.logger.error('Required DynusT File {:s} Found'.format(check_file))
+                        self.logger.info('Required DynusT File {:s} Found'.format(check_file))
                     else:
                         self.state = TaskStatus.FAIL
                         self.logger.error('Required DynusT File {:s} Not Found'.format(check_file))
 
                 # Check the vehicle roster
-                check_file = os.path.join(self.scen_dir, r'STM\STM_A\01_DynusT\03_Model', 'vehicle.dat')
-                if not os.path.isfile(check_file):
-                    self.state = TaskStatus.FAIL
-                    self.logger.error('Required DynusT Vehicle Roster {:s} Not Found'.format(check_file))
+                for f in self.REQUIRED_DEMAND_FILES:
+                    check_file = os.path.join(self.scen_dir, r'STM\STM_A\01_DynusT\03_Model', f)
+                    if not os.path.isfile(check_file):
+                        self.state = TaskStatus.FAIL
+                        self.logger.error('Required DynusT Vehicle Demand {:s} Not Found'.format(check_file))
 
     def run_full_assignment(self):
         if self.state != TaskStatus.OK:
             return
+        if not self.run_completed:
+            model_dir = os.path.join(self.scen_dir, r'STM\STM_A\01_DynusT\03_Model')
+            executable = os.path.join(model_dir, self.dynust_executable_name+'.exe')
+            # username = os.environ['USERNAME']
 
-        executable = self.dynastuio_executable
-        username = os.environ['USERNAME']
-        model_dir = os.path.join(self.scen_dir, r'STM\STM_A\01_DynusT\03_Model')
+            # process = subprocess.Popen(args=[executable, username, '0000', self.dynust_executable_name], cwd=model_dir)
+            process = subprocess.Popen(args=[executable, ''], cwd=model_dir)
+            exitcode = process.wait()
 
-        process = subprocess.Popen(args=[executable, username, '0000', self.dynust_executable_name], cwd=model_dir)
-        exitcode = process.wait()
+            # if not os.path.isfile(os.path.join(model_dir, 'executing')):
+            #     self.info('DynusT Run Finished')
+            #     self.run_completed = True
 
-        if not os.path.isfile(os.path.join(model_dir, 'executing')):
-            self.info('DynusT Run Finished')
-            self.run_completed = True
+            if exitcode == 0:
+                self.logger.error('DynusT Run Failed')
+                self.run_completed = False
+                self.state = TaskStatus.FAIL
+            else:
+                self.run_completed = True
 
     def run(self):
         self.run_full_assignment()
