@@ -75,6 +75,7 @@ class ControlService(object):
             return key_value_pair[0], None
 
     def replace_tokens(self, s, token='%'):
+        s = s.strip()
         substrs = []
         token_count, prev = 0, 0
         for i, ch in enumerate(s):
@@ -95,11 +96,11 @@ class ControlService(object):
         if token == '%':
             for i, substr in enumerate(substrs):
                 if fnmatch(substr, '%*%'):
-                    output[i] = os.environ.get(substr[1:-1], None)
+                    output[i] = os.environ.get(substr[1:-1], '').strip()
         if token == '@':
             for i, substr in enumerate(substrs):
                 if fnmatch(substr, '@*@'):
-                    output[i] = self.tokens.get(substr, None)
+                    output[i] = self.tokens.get(substr, '')
         return ''.join(output)
 
     def read_control(self, control_file):
@@ -406,19 +407,19 @@ class ControlService(object):
 
 
 if __name__ == '__main__':
-    DEBUG = 0
+    DEBUG = 1
     if DEBUG == 1:
         import os
 
         # execution_path = r"C:\Projects\Repo\Work\STM\tests\Controls"
-        execution_path = r"C:\Projects\SWIFT\SWIFT_Workspace\Scenarios\S04_Full\STM\STM_A\01_DynusT\01_Controls"
+        execution_path = r"L:\DCS\Projects\_Legacy\60563434_SWIFT\400_Technical\SWIFT_Workspace\CommonData\STM\STM_A\Control_Template"
         control_file = "ConvertTrips_OTHER_AM.ctl"
         control_file = os.path.join(execution_path, control_file)
 
         _environ = os.environ.copy()
         try:
             env = {
-                'SCEN_DIR': r'C:\Projects\SWIFT\SWIFT_Workspace\Scenarios\S04_Full',
+                'SCEN_DIR': r'L:\DCS\Projects\_Legacy\60563434_SWIFT\400_Technical\SWIFT_Workspace\Scenarios\Scenario_S4_Full',
                 'SCEN': 'S04_Full',
                 'PURPOSE': 'OTHER_AM'
             }
@@ -426,7 +427,7 @@ if __name__ == '__main__':
             exe = ControlService(input_control_file=control_file)
             exe.execute()
         finally:
-            os.environ.update(_environ)
+            os.environ = _environ
     else:
         from sys import argv
         exe = ControlService(input_control_file=argv[1])

@@ -266,7 +266,7 @@ class NetworkPrep(ExecutionService):
 
 if __name__ == '__main__':
 
-    DEBUG = 1
+    DEBUG = 0
     if DEBUG == 1:
         import os
         execution_path = r"C:\Projects\SWIFT\SWIFT_Project_Data\Controls"

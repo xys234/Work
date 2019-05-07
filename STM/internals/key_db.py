@@ -81,6 +81,7 @@ NETWORK_KEYS = {
     'NEW_NETWORK_FILE': KeyInfo(KeyValueTypes.FILE, '', Offset.NETWORK_KEYS_OFFSET + 10, KeyGroupTypes.SINGLE, Help.FILE_HELP),
     'TRAFFIC_FLOW_MODEL_FILE': KeyInfo(KeyValueTypes.FILE, '', Offset.NETWORK_KEYS_OFFSET + 11, KeyGroupTypes.SINGLE, Help.FILE_HELP),
     'NEW_TRAFFIC_FLOW_MODEL_FILE': KeyInfo(KeyValueTypes.FILE, '', Offset.NETWORK_KEYS_OFFSET + 12, KeyGroupTypes.SINGLE, Help.FILE_HELP),
+    'NEW_VEHICLE_ROSTER_FORMAT': KeyInfo(KeyValueTypes.STRING, 'TEXT', Offset.NETWORK_KEYS_OFFSET + 13, KeyGroupTypes.SINGLE, Help.FILE_HELP),
 
 }
 

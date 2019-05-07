@@ -3,6 +3,7 @@ import sys
 import csv
 import random
 from math import ceil
+import struct
 
 from services.execution_service import ExecutionService
 from services.control_service import State
@@ -80,29 +81,63 @@ class TripPrep(ExecutionService):
         suffix = "_" + str(group)
         self.input_vehicle_roster_file = self.keys['VEHICLE_ROSTER_FILE'+suffix].value
 
-    def read_trips(self):
+    def read_text_trips(self, g):
         """
         Read in all input trip rosters
         :return:
         """
+        with open(self.input_vehicle_roster_file, mode='r', buffering=super().INPUT_BUFFER) as input_roster:
+            expected_number_of_trips = trip_count = 0
+            for i, line in enumerate(input_roster):
+                if i == 0:
+                    expected_number_of_trips = int(line.strip().split()[0])
+                if i > 1:
+                    line = line.strip() + next(input_roster)
+                    self.input_vehicle_count += 1
+                    trip_count += 1
+                    if trip_count % 10_000 == 0 or trip_count == expected_number_of_trips:
+                        sys.stdout.write("\rNumber of Vehicles Read = {:,d} ({:.2f} %)".format(
+                            trip_count, trip_count * 100.0 / expected_number_of_trips))
+                    trip = TripFileRecord()
+                    trip.from_string(line.split())
 
-        for g in range(1, self.highest_group+1):
-            self.initialize_internal_data(group=g)
-            with open(self.input_vehicle_roster_file, mode='r', buffering=super().INPUT_BUFFER) as input_roster:
-                expected_number_of_trips = trip_count = 0
-                for i, line in enumerate(input_roster):
-                    if i == 0:
-                        expected_number_of_trips = int(line.strip().split()[0])
-                    if i > 1:
-                        line = line.strip() + next(input_roster)
-                        self.input_vehicle_count += 1
+                    if not self.renumber_trips:
+                        if trip.vehid in self.trip_index:
+                            self.duplicate_trip_index.add(trip.vehid)
+                        else:
+                            self.trip_index.add(trip.vehid)
+                            self.trips.append(trip)
+                    else:
+                        self.trips.append(trip)
+
+            sys.stdout.write('\n')
+
+        if expected_number_of_trips != trip_count:
+            self.logger.warning("Number of trips read {:,d} inconsistent with the header count {:,d}"
+                                .format(trip_count, expected_number_of_trips))
+        self.logger.info("Number of Vehicles Read in Trip Roster {:d} = {:,d}".format(g, trip_count))
+
+    def read_binary_trips(self, g):
+        trip_count = 0
+        with open(self.input_vehicle_roster_file, mode='rb', buffering=super().INPUT_BUFFER) as input_roster:
+            eof = False
+            while not eof:
+                data = input_roster.read(struct.calcsize(TripFileRecord.fmt_binary))
+                if not data:
+                    eof = True
+                else:
+                    trip = TripFileRecord()
+                    try:
+                        trip.from_bytes(data)
+                    except struct.error:
+                        self.state = State.ERROR
+                        self.logger.error('Error in reading binary trip file')
+                        eof = True
+                    if self.state == State.OK:
                         trip_count += 1
-                        if trip_count % 1000 == 0 or trip_count == expected_number_of_trips:
-                            sys.stdout.write("\rNumber of Vehicles Read = {:,d} ({:.2f} %)".format(
-                                trip_count, trip_count*100.0/expected_number_of_trips))
-                        trip = TripFileRecord()
-                        trip.from_string(line.split())
-
+                        self.input_vehicle_count += 1
+                        if trip_count % 10_000 == 0:
+                            sys.stdout.write("\rNumber of Vehicles Read = {:,d}".format(trip_count))
                         if not self.renumber_trips:
                             if trip.vehid in self.trip_index:
                                 self.duplicate_trip_index.add(trip.vehid)
@@ -112,16 +147,21 @@ class TripPrep(ExecutionService):
                         else:
                             self.trips.append(trip)
 
-                sys.stdout.write('\n')
+        sys.stdout.write('\n')
+        self.logger.info("Number of Vehicles Read in Trip Roster {:d} = {:,d}".format(g, trip_count))
 
-            if expected_number_of_trips != trip_count:
-                self.logger.warning("Number of trips read {:,d} inconsistent with the header count {:,d}"
-                                    .format(trip_count, expected_number_of_trips))
-            self.logger.info("Number of Vehicles Read in Trip Roster {:d} = {:,d}".format(g, trip_count))
+    def read_trips(self):
+        for g in range(1, self.highest_group+1):
+            self.initialize_internal_data(group=g)
+            if self.input_vehicle_roster_file.find('.bin') >= 0:
+                self.read_binary_trips(g)
+            else:
+                self.read_text_trips(g)
 
         # Sort the trips based on departure time
         self.logger.info("Sorting trips based on departure time")
-        self.trips = sorted(self.trips, key=lambda t: t.stime)
+        self.trips.sort(key=lambda t: t.stime)
+        self.logger.info("Sorting trips based on departure time complete")
 
         # Renumber the trips
         if self.renumber_trips:
@@ -198,8 +238,9 @@ class TripPrep(ExecutionService):
                 record_1, record_2 = self.trip_fmt_str_1 % values[:-2], self.trip_fmt_str_2 % values[-2:]
                 record = record_1 + record_2
                 writer.writerow(record.split())
-                sys.stdout.write("\rNumber of Vehicles Written = {:,d} ({:.2f} %)".format(
-                    i+1, (i+1) * 100.0 / expected_number_of_trips))
+                if i + 1 % 10_000 == 0 or i + 1 == len(self.selection_ids):
+                    sys.stdout.write("\rNumber of Vehicles Written = {:,d} ({:.2f} %)".format(
+                        i+1, (i+1) * 100.0 / expected_number_of_trips))
             sys.stdout.write('\n')
 
     def execute(self):
@@ -234,7 +275,7 @@ class TripPrep(ExecutionService):
 
 
 if __name__ == '__main__':
-    DEBUG = 1
+    DEBUG = 0
     if DEBUG == 1:
         import os
         execution_path = r"C:\Projects\SWIFT\SWIFT_Project_Data\Controls"
@@ -242,9 +283,16 @@ if __name__ == '__main__':
         control_file = "TripPrep_MergeTrips.ctl"
         # control_file = "ConvertTrips_OTHER_AM.ctl"
         control_file = os.path.join(execution_path, control_file)
-        exe = TripPrep(input_control_file=control_file)
-        state = exe.execute()
-        sys.exit(state)
+        _environ = os.environ.copy()
+        try:
+            env = {
+                'SCEN_DIR': r'C:\Projects\SWIFT\SWIFT_Workspace\Scenarios\Scenario_S4_Full',
+            }
+            os.environ.update(env)
+            exe = TripPrep(input_control_file=control_file)
+            exe.execute()
+        finally:
+            os.environ = _environ
     else:
         from sys import argv
         exe = TripPrep(input_control_file=argv[1])

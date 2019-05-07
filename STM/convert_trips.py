@@ -328,8 +328,13 @@ class ConvertTrips(ExecutionService):
 
         self.logger.info("Total vehicles converted                    = {0:,d}".format(len(self.vehicles)))
 
-    def write_flat_vehicle_file(self):
-        pass
+    def write_binary_vehicle_file(self):
+        if self.state == State.ERROR:
+            return
+
+        with open(self.vehicle_roster_file, mode='wb', buffering=super().OUTPUT_BUFFER) as output_veh:
+            for trip in self.vehicles:
+                output_veh.write(trip.to_bytes())
 
     def execute(self):
         """
@@ -352,7 +357,10 @@ class ConvertTrips(ExecutionService):
                     self.logger.info(
                         "Matrix Converted in %.2f minutes" % ((time.time() - matrix_conversion_start_time) / 60))
 
-            self.write_vehicles()
+            if self.keys['NEW_VEHICLE_ROSTER_FORMAT'].value == 'BINARY':
+                self.write_binary_vehicle_file()
+            else:
+                self.write_vehicles()
 
         end_time = time.time()
         execution_time = (end_time-start_time)/60.0
@@ -371,13 +379,24 @@ if __name__ == '__main__':
     DEBUG = 0
     if DEBUG == 1:
         import os
-        # execution_path = r"C:\Projects\SWIFT\SWIFT_Project_Data\Controls"
-        execution_path = r"C:\Projects\SWIFT\SWIFT_Workspace\Scenarios\S04_Full\STM\STM_A\01_DynusT\01_Controls"
+        execution_path = r"C:\Projects\SWIFT\SWIFT_Project_Data\Controls"
+        # execution_path = r"L:\DCS\Projects\_Legacy\60563434_SWIFT\400_Technical\SWIFT_Workspace\CommonData\STM\STM_A\Control_Template"
+        # execution_path = r"C:\Projects\SWIFT\SWIFT_Workspace\CommonData\STM\STM_A\Control_Template"
         # control_file = "ConvertTrips_HBW_AM.ctl"
-        control_file = "ConvertTrips_OTHER_AM.ctl"
+        # control_file = "ConvertTrips_OTHER_AM.ctl"
+        control_file = "ConvertTrips_OTHER_MD.ctl"
         control_file = os.path.join(execution_path, control_file)
-        exe = ConvertTrips(input_control_file=control_file)
-        state = exe.execute()
+        _environ = os.environ.copy()
+        try:
+            env = {
+                'SCEN_DIR': r'C:\Projects\SWIFT\SWIFT_Workspace\Scenarios\Scenario_S4_Full',
+            }
+            os.environ.update(env)
+            exe = ConvertTrips(input_control_file=control_file)
+            exe.execute()
+        finally:
+            os.environ = _environ
+
     else:
         from sys import argv
         exe = ConvertTrips(input_control_file=argv[1])

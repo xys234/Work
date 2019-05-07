@@ -256,6 +256,12 @@ class TripFileRecord(RecordMixin, BaseTripFileRecord):
     def to_string(self):
         return self.fmt_string.format(*self.values)
 
+    def from_bytes(self, values):
+        self.update(struct.unpack(self.fmt_binary, values))
+
+    def to_bytes(self):
+        return struct.pack(self.fmt_binary, *self.values)
+
 
 class File:
 
@@ -274,6 +280,9 @@ class File:
 
     def append(self, record):
         self.records.append(record)
+
+    def sort(self, key=None):
+        self.records.sort(key=key)
 
 
 if __name__ == '__main__':
