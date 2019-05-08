@@ -9,11 +9,13 @@ import timeit
 import time
 from internals.sorted_collection import SortedCollection
 import sys
+from services.file_service import TripFileRecord
+
 
 class Trip:
     __slots__ = ('vid', 'stime', 'purp', 'mode', 'field2', 'field3', 'field4', 'field5', 'field6', 'field7', 'field8'
                  , 'field9', 'field10', 'field11', 'field12', 'field13', 'field14', 'field15', 'field16', 'field17',
-                 'field18', 'field19', 'field20')
+                 'field18', 'field19', 'field20', 'field21', 'field22')
 
     def __init__(self, vid, stime):
         self.vid = vid
@@ -39,6 +41,8 @@ class Trip:
         self.field18 = 1
         self.field19 = 1
         self.field20 = 1
+        self.field21 = 1
+        self.field22 = 1
 
 
 SEED = 47
@@ -48,14 +52,23 @@ random.seed(SEED)
 sizes = [100, 1000, 1_000_000, 10_000_000]
 # times = [0] * len(sizes)
 
-for size in sizes:
-    stimes = [random.uniform(0, 24) for _ in range(size)]
-    trips = [Trip(i, t) for i, t in zip(range(size), stimes)]
-    start_time = time.time()
-    # trips = sorted(trips, key=lambda trip: trip.stime)
-    trips.sort(key=lambda trip: trip.stime)
-    execution_time = time.time() - start_time
-    print('{:10d} trips run time = {:.0f} seconds'.format(len(trips), execution_time))
+n = 30_000_000
+# n = 10_000
+# n = 1000
+trip = TripFileRecord()
+print("Size of 1 trip = {:,.0f} B".format(sys.getsizeof(trip)))
+# trips = [TripFileRecord() for _ in range(n)]
+# trips = [Trip(1, 1.0) for _ in range(n)]
+# print("Size of {:,d} trips = {:,.0f} MB".format(n, sys.getsizeof(trips)/1048576.0))
+
+# for size in sizes:
+#     stimes = [random.uniform(0, 24) for _ in range(size)]
+#     trips = [Trip(i, t) for i, t in zip(range(size), stimes)]
+#     start_time = time.time()
+#     # trips = sorted(trips, key=lambda trip: trip.stime)
+#     trips.sort(key=lambda trip: trip.stime)
+#     execution_time = time.time() - start_time
+#     print('{:10d} trips run time = {:.0f} seconds'.format(len(trips), execution_time))
 
 # for size in sizes:
 #     stimes = [random.uniform(0, 24) for _ in range(size)]
