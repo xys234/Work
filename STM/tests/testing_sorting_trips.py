@@ -9,37 +9,65 @@ import timeit
 import time
 from internals.sorted_collection import SortedCollection
 import sys
+from services.file_service import TripFileRecord
+import struct
+
 
 class Trip:
-    __slots__ = ('vid', 'stime', 'purp', 'mode', 'field2', 'field3', 'field4', 'field5', 'field6', 'field7', 'field8'
-                 , 'field9', 'field10', 'field11', 'field12', 'field13', 'field14', 'field15', 'field16', 'field17',
-                 'field18', 'field19', 'field20')
 
-    def __init__(self, vid, stime):
-        self.vid = vid
-        self.stime = stime
-        self.purp = 1
-        self.mode = 1
-        self.field2 = 1
-        self.field3 = 1
-        self.field4 = 1
-        self.field5 = 1
-        self.field6 = 1
-        self.field7 = 1
-        self.field8 = 1
-        self.field9 = 1
-        self.field10 = 1
-        self.field11 = 1
-        self.field12 = 1
-        self.field13 = 1
-        self.field14 = 1
-        self.field15 = 1
-        self.field16 = 1
-        self.field17 = 1
-        self.field18 = 1
-        self.field19 = 1
-        self.field20 = 1
+    __slots__ = ('values',)
 
+    fmt_binary = "=iiifiiiiiiffiiffififif"
+    fmt_string = "{:>9d}{:>7d}{:>7d}{:>8.1f}{:>6d}{:>6d}{:>6d}{:>6d}{:>6d}{:>6d}{:>8.4f}{:>8.4f}{:>6d}" \
+                 "{:>6d}{:>12.8f}{:>8.2f}{:>5d}{:>7.1f}{:>5d}{:>5.1f}\n{:>12d}{:>7.2f}\n"
+
+    def __init__(self):
+        self.values = [0 for _ in range(len(Trip.fmt_binary)-1)]
+
+    def update(self, vals):
+        for i, v in enumerate(vals):
+            self.values[i] = v
+
+    def from_bytes(self, values):
+        self.update(struct.unpack(self.fmt_binary, values))
+
+    def to_bytes(self):
+        return struct.pack(self.fmt_binary, *self.values)
+
+    @property
+    def vehid(self):
+        return self.values[0]
+
+    @vehid.setter
+    def vehid(self, v):
+        self.values[0] = v
+
+    @property
+    def stime(self):
+        return self.values[3]
+
+
+class Trip2:
+
+    fmt_binary = "=iiifiiiiiiffiiffififif"
+    fmt_string = "{:>9d}{:>7d}{:>7d}{:>8.1f}{:>6d}{:>6d}{:>6d}{:>6d}{:>6d}{:>6d}{:>8.4f}{:>8.4f}{:>6d}" \
+                 "{:>6d}{:>12.8f}{:>8.2f}{:>5d}{:>7.1f}{:>5d}{:>5.1f}\n{:>12d}{:>7.2f}\n"
+
+    def __init__(self):
+        self.values = [0 for _ in range(len(Trip.fmt_binary)-1)]
+
+    def update(self, vals):
+        for i, v in enumerate(vals):
+            self.values[i] = v
+
+    def from_bytes(self, values):
+        self.update(struct.unpack(self.fmt_binary, values))
+
+    def to_bytes(self):
+        return struct.pack(self.fmt_binary, *self.values)
+
+
+# print(sys.getsizeof(Trip()), sys.getsizeof(Trip2()))
 
 SEED = 47
 random.seed(SEED)
@@ -48,14 +76,45 @@ random.seed(SEED)
 sizes = [100, 1000, 1_000_000, 10_000_000]
 # times = [0] * len(sizes)
 
-for size in sizes:
-    stimes = [random.uniform(0, 24) for _ in range(size)]
-    trips = [Trip(i, t) for i, t in zip(range(size), stimes)]
-    start_time = time.time()
-    # trips = sorted(trips, key=lambda trip: trip.stime)
-    trips.sort(key=lambda trip: trip.stime)
-    execution_time = time.time() - start_time
-    print('{:10d} trips run time = {:.0f} seconds'.format(len(trips), execution_time))
+output_trip_file = r'D:\Work\Vehicle_mid.bin'
+
+size = 10_000_000
+# with open(output_trip_file, mode='wb') as output_vehicle:
+#
+#     stimes = [random.uniform(0, 24) for _ in range(size)]
+#     trips = [TripFileRecord() for i, t in zip(range(size), stimes)]
+#     start_time = time.time()
+#     # trips = sorted(trips, key=lambda trip: trip.stime)
+#     trips.sort(key=lambda t: t.stime)
+#     execution_time = time.time() - start_time
+#     print('{:10d} trips run time = {:.0f} seconds'.format(len(trips), execution_time))
+#     for trip in trips:
+#         output_vehicle.write(trip.to_bytes())
+
+start_time = time.time()
+trip_file = []
+with open(output_trip_file, mode='rb') as input_vehicle:
+    trip_count = 0
+    eof = False
+    while not eof:
+        data = input_vehicle.read(struct.calcsize(TripFileRecord.fmt_binary))
+        if not data:
+            eof = True
+        else:
+            trip_count += 1
+            trip = Trip()
+            trip.from_bytes(data)
+            trip_file.append(trip)
+            if trip_count % 10_000 == 0:
+                sys.stdout.write("\rNumber of Vehicles Read = {:,d}".format(trip_count))
+sort_start = time.time()
+trip_file.sort(key=lambda t: t.stime)
+sort_time = time.time() - sort_start
+print('Sorting run time = {:.0f} seconds'.format(sort_time))
+execution_time = time.time() - start_time
+print('{:10d} trips run time = {:.0f} seconds'.format(len(trip_file), execution_time))
+
+# Sorting run time = 4 seconds, 10000000 trips run time = 81 seconds
 
 # for size in sizes:
 #     stimes = [random.uniform(0, 24) for _ in range(size)]
