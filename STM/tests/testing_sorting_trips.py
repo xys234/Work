@@ -158,15 +158,17 @@ def write_trip_file(stime_index, all_trips, outfile):
         for i, trip_index in enumerate(stime_index):
             t = Trip()
             t.from_bytes(all_trips[trip_index[1]:trip_index[1]+read_size])
+            t.vehid = i + 1   # rename
             output_vehicle.write(str(t))
             sys.stdout.write("\rWriting Vehicle Roster = {:,d} Trips".format(i+1))
 
 
 TRIP_FILE_DIR = r'C:\Projects\SWIFT\SWIFT_Workspace\Scenarios\Scenario_S4_Full\STM\STM_A\01_DynusT\02_Demand'
 # trip_files = ('Vehicles_OTHER_AM.bin', 'Vehicles_OTHER_MD.bin')
-purposes = ('HBW', 'HBNW', 'NHO', 'NHW', 'OTHER')
+# purposes = ('HBW', 'HBNW', 'NHO', 'NHW', 'OTHER')
+purposes = ('OTHER',)
 # purposes = ('HBNW', 'OTHER')
-periods = ('AM', 'MD', 'PM', 'OV')
+periods = ('AM',)
 
 trip_files = ['_'.join(('Vehicles', purpose, period))+'.bin' for purpose, period in itertools.product(purposes, periods)]
 output_trip_file = os.path.join(TRIP_FILE_DIR, 'Vehicle_by_index.dat')
@@ -183,3 +185,4 @@ sindex = build_start_time_index(all_trips)
 write_trip_file(sindex, all_trips, output_trip_file)
 execution_time = time.time() - start_time
 print('{:10d} trips run time = {:.0f} seconds'.format(len(sindex), execution_time))
+

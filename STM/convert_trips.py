@@ -383,8 +383,8 @@ if __name__ == '__main__':
         # execution_path = r"L:\DCS\Projects\_Legacy\60563434_SWIFT\400_Technical\SWIFT_Workspace\CommonData\STM\STM_A\Control_Template"
         # execution_path = r"C:\Projects\SWIFT\SWIFT_Workspace\CommonData\STM\STM_A\Control_Template"
         # control_file = "ConvertTrips_HBW_AM.ctl"
-        # control_file = "ConvertTrips_OTHER_AM.ctl"
-        control_file = "ConvertTrips_OTHER_MD.ctl"
+        control_file = "ConvertTrips_OTHER_AM.ctl"
+        # control_file = "ConvertTrips_OTHER_MD.ctl"
         control_file = os.path.join(execution_path, control_file)
         _environ = os.environ.copy()
         try:
