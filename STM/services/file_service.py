@@ -283,6 +283,24 @@ class TripFileRecord:
     def to_bytes(self):
         return struct.pack(self.fmt_binary, *self.values)
 
+    @staticmethod
+    def convert(values, fmt):
+        converter = {
+            'i': int,
+            'b': int,
+            'h': int,
+            'f': float,
+        }
+        return tuple([converter[f](v) for v, f in zip(values, fmt[1:])])
+
+    def from_string(self, values):
+        number_of_fields = len(self.fmt_binary) - 1
+        if len(values) != number_of_fields:
+            raise ValueError(f'Argument must be a tuple of size {len(self)}')
+        converted_values = self.convert(values, self.fmt_binary)
+        for i, v in enumerate(converted_values):
+            self.values[i] = v
+
     def __str__(self):
         return self.fmt_string.format(*self.values)
 
@@ -297,6 +315,10 @@ class TripFileRecord:
     @property
     def stime(self):
         return self.values[3]
+
+    @stime.setter
+    def stime(self, v):
+        self.values[3] = v
 
 
 class File:

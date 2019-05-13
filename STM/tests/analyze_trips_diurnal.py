@@ -4,6 +4,7 @@ import sys
 import struct
 import itertools
 import time
+import csv
 
 
 def summarize_diurnal_distribution(text_vehicle_roster, output_diurnal_file):
@@ -38,6 +39,70 @@ def summarize_diurnal_distribution(text_vehicle_roster, output_diurnal_file):
         output_diurnal.write('Start,Trips\n')
         for s, trip in summary.items():
             output_diurnal.write('{:.1f}, {:d}\n'.format(s/10.0, trip))
+
+
+def summarize_mode(text_vehicle_roster, output_mode_summary):
+    """
+    Read text trip rosters and create a diurnal summary
+    :param
+    diurnal_bins are a list of tuples
+    :return:
+    """
+
+    summary = {}
+    with open(text_vehicle_roster, mode='r', buffering=20_000_000) as input_roster:
+        expected_number_of_trips = trip_count = 0
+        for i, line in enumerate(input_roster):
+            if i == 0:
+                expected_number_of_trips = int(line.strip().split()[0])
+            if i > 1:
+                line = line.strip() + next(input_roster)
+                trip_count += 1
+                if trip_count % 10_000 == 0 or trip_count == expected_number_of_trips:
+                    sys.stdout.write("\rNumber of Vehicles Read = {:,d} ({:.2f} %)".format(
+                        trip_count, trip_count * 100.0 / expected_number_of_trips))
+                bin_index = int(float(line.split()[6]))
+                if bin_index in summary:
+                    summary[bin_index] += 1
+                else:
+                    summary[bin_index] = 1
+
+        sys.stdout.write('\n')
+
+    with open(output_mode_summary, mode='w', buffering=20_000_000) as output_mode:
+        output_mode.write('Mode,Trips\n')
+        for s, trip in summary.items():
+            output_mode.write('{:d}, {:d}\n'.format(s, trip))
+
+
+def flatten_vehicle_roster(text_vehicle_roster, output_flat_roster):
+    trip_fmt_str_flat = "{:d},{:d},{:d},{:.1f},{:d},{:d},{:d},{:d},{:d},{:d},{:.4f},{:.4f},{:d}," \
+                        "{:d},{:.8f},{:.2f},{:d},{:.1f},{:d},{:.1f},{:d},{:.2f}"
+    TRIP_FILE_HEADER = '''vid usec dsec stime vehcls vehtype 
+                                      ioc #ONode #IntDe info ribf comp Izone Evac InitPos VoT tFlag pArrTime TP IniGas 
+                                      DZone waitTime'''
+    with open(text_vehicle_roster, mode='r', buffering=20_000_000) as input_roster, \
+            open(output_flat_roster, mode='w', buffering=20_000_000) as output_trip:
+        writer = csv.writer(output_trip)
+        writer.writerow(TRIP_FILE_HEADER.split())
+
+        expected_number_of_trips = trip_count = 0
+        for i, line in enumerate(input_roster):
+            if i == 0:
+                expected_number_of_trips = int(line.strip().split()[0])
+            if i > 1:
+                line = line.strip() + next(input_roster)
+                trip = TripFileRecord()
+                trip.from_string(line.split())
+                trip_count += 1
+                if trip_count % 10_000 == 0 or trip_count == expected_number_of_trips:
+                    sys.stdout.write("\rNumber of Vehicles Read = {:,d} ({:.2f} %)".format(
+                        trip_count, trip_count * 100.0 / expected_number_of_trips))
+                values = tuple(trip.values)
+                record = trip_fmt_str_flat.format(*values)
+                writer.writerow(record.split(','))
+
+        sys.stdout.write('\n')
 
 
 def get_diurnal_bins(diurnal_file):
@@ -101,11 +166,13 @@ def write_trip_file(stime_index, all_trips, outfile):
 if __name__ == '__main__':
     start_time = time.time()
     diurnal_file = r'L:\DCS\Projects\_Legacy\60563434_SWIFT\400_Technical\SWIFT_Workspace\CommonData\STM\STM_A\Shared_Inputs\Diurnal_Full.csv'
-    vehicle_roster_file = r'L:\DCS\Projects\_Legacy\60563434_SWIFT\400_Technical\Houston_8_County_DTA_CalibValid\_dst\HGAC_45_fr\vehicle.dat'
-    output_diurnal_file = r'C:\Projects\SWIFT_Project_Data\Outputs\HGAC_45_fr_diurnal.csv'
+    vehicle_roster_file = r'C:\Projects\SWIFT\SWIFT_Workspace\Scenarios\Scenario_S0\STM\STM_A\01_DynusT\03_Model\vehicle.dat'
+    # output_diurnal_file = r'C:\Projects\SWIFT_Project_Data\Outputs\HGAC_45_fr_diurnal.csv'
+    output_flat_roster = r'C:\Projects\SWIFT\SWIFT_Workspace\Scenarios\Scenario_S0\STM\STM_A\01_DynusT\03_Model\vehicle.csv'
 
-    diurnal_bins = get_diurnal_bins(diurnal_file)
-    summarize_diurnal_distribution(vehicle_roster_file, output_diurnal_file)
+    # diurnal_bins = get_diurnal_bins(diurnal_file)
+    # summarize_diurnal_distribution(vehicle_roster_file, output_diurnal_file)
+    flatten_vehicle_roster(vehicle_roster_file, output_flat_roster)
     execution_time = time.time() - start_time
     print('Process complete in {:.0f} seconds'.format(execution_time))
 

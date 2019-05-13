@@ -307,6 +307,7 @@ class ConvertTrips(ExecutionService):
         for i, vals in enumerate(vehicle_pool):
             trip = TripFileRecord()
             trip.update((len(self.vehicles)+1, ) + vals)
+            trip.stime = trip.stime * 60.0
             self.vehicles.append(trip)
             num_vehicles += 1
         self.logger.info("Vehicles converted                          = {0:,d}".format(num_vehicles))
