@@ -346,9 +346,9 @@ class ConvertTrips(ExecutionService):
 
         """
         super().execute()
-        start_time = time.time()
 
         if self.state == State.OK:
+            start_time = time.time()
             for i in range(self.highest_group):
                 if self.state == State.OK:
                     matrix_conversion_start_time = time.time()
@@ -363,15 +363,15 @@ class ConvertTrips(ExecutionService):
             else:
                 self.write_vehicles()
 
-        end_time = time.time()
-        execution_time = (end_time-start_time)/60.0
+            end_time = time.time()
+            execution_time = (end_time-start_time)/60.0
 
-        self.logger.info("")
-        self.logger.info("")
-        if self.state == State.ERROR:
-            self.logger.info("Execution completed with ERROR in %.2f minutes" % execution_time)
-        else:
-            self.logger.info("Execution completed in %.2f minutes" % execution_time)
+            self.logger.info("")
+            self.logger.info("")
+            if self.state == State.ERROR:
+                self.logger.info("Execution completed with ERROR in %.2f minutes" % execution_time)
+            else:
+                self.logger.info("Execution completed in %.2f minutes" % execution_time)
         return self.state.value
 
 
@@ -380,17 +380,15 @@ if __name__ == '__main__':
     DEBUG = 0
     if DEBUG == 1:
         import os
-        execution_path = r"C:\Projects\SWIFT\SWIFT_Project_Data\Controls"
-        # execution_path = r"L:\DCS\Projects\_Legacy\60563434_SWIFT\400_Technical\SWIFT_Workspace\CommonData\STM\STM_A\Control_Template"
+        # execution_path = r"C:\Projects\SWIFT\SWIFT_Project_Data\Controls"
+        execution_path = r"L:\DCS\Projects\_Legacy\60563434_SWIFT\400_Technical\SWIFT_Workspace\CommonData\STM\STM_A\Control_Template"
         # execution_path = r"C:\Projects\SWIFT\SWIFT_Workspace\CommonData\STM\STM_A\Control_Template"
-        # control_file = "ConvertTrips_HBW_AM.ctl"
-        control_file = "ConvertTrips_OTHER_AM.ctl"
-        # control_file = "ConvertTrips_OTHER_MD.ctl"
+        control_file = "ConvertTrips_WK_CAV_NonEV_AM.bin "
         control_file = os.path.join(execution_path, control_file)
         _environ = os.environ.copy()
         try:
             env = {
-                'SCEN_DIR': r'C:\Projects\SWIFT\SWIFT_Workspace\Scenarios\Scenario_S4_Full',
+                'SCEN_DIR': r'C:\Projects\SWIFT\SWIFT_Workspace\Scenarios\Scenario_S4_Full_DynusT',
             }
             os.environ.update(env)
             exe = ConvertTrips(input_control_file=control_file)
