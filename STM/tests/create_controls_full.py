@@ -171,7 +171,8 @@ if __name__ == '__main__':
 
     control_file_folder = r'C:\Projects\SWIFT\SWIFT_Project_Data\Controls'
 
-    matrix_folder = r'C:\Projects\SWIFT\SWIFT_Project_Data\Inputs\OD\2045'
+    # matrix_folder = r'C:\Projects\SWIFT\SWIFT_Project_Data\Inputs\OD\2045'
+    matrix_folder = r'L:\DCS\Projects\_Legacy\60563434_SWIFT\400_Technical\SWIFT_Workspace\Scenarios\Scenario_S12\STM\STM_D\Outputs_SWIFT'
     matrices_am = ["OD AM3HR Vehicles4DynusT EV", "OD AM3HR Vehicles4DynusT NonEV"]
     matrices_md = ["OD MD6HR Vehicles4DynusT EV", "OD MD6HR Vehicles4DynusT NonEV"]
     matrices_pm = ["OD PM4HR Vehicles4DynusT EV", "OD PM4HR Vehicles4DynusT NonEV"]
@@ -188,10 +189,10 @@ if __name__ == '__main__':
 
     vots = {
         "wi1da": 9.6, "wi2da": 15.04, "wi3da": 20.48, "wi4da": 27.52, "wi5da": 37.12,
-        "wi12a2": 21.56, "wai3a2": 35.84, "wi45a2": 56.56,
+        "wi12a2": 21.56, "wi3a2": 35.84, "wi45a2": 56.56,
         "wi12a3": 30.8, "wi3a3": 51.2, "wi45a3": 80.8,
         "nwi12da": 7.03, "nwi3da": 13.44, "nwi45da": 23.65,
-        "nwi12a2": 12.3, "nwai3a2": 23.52, "nwi45a2": 41.39,
+        "nwi12a2": 12.3, "nwi3a2": 23.52, "nwi45a2": 41.39,
         "nwi12a3": 17.57, "nwi3a3": 33.6, "nwi45a3": 59.12,
         "Cargo": 64.0, "Serv": 40.0, "taxi_exta": 18.94, "TNC": 18.94
     }
