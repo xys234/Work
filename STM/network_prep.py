@@ -159,7 +159,7 @@ class NetworkPrep(ExecutionService):
         # _, beta = self.lk_beta.lookup(self.cav_percent, exact=False)
 
         for record in self.traffic_flow_model_file:
-            record.alpha = record.alpha * alpha_factor
+            record.alpha = max(1.0, record.alpha * alpha_factor)
             # record.beta = beta
 
     def write_traffic_flow_models(self):
