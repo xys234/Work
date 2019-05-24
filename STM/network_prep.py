@@ -106,7 +106,7 @@ class NetworkPrep(ExecutionService):
                     self.network_file.append(record)
                     number_of_nodes_read += 1
                     sys.stdout.write("\rNumber of Node-Zone Records Read = {:,d}".format(number_of_nodes_read))
-                    sys.stdout.write("\n")
+                    # sys.stdout.write("\n")
 
                 elif number_of_nodes_read == self.number_of_nodes and number_of_links_read < self.number_of_links:
                     record = NetworkLinkRecord()
@@ -217,12 +217,20 @@ class NetworkPrep(ExecutionService):
                 line = line.strip().split(',')
                 if line[0].startswith('p_tech_cv_pct'):
                     self.cv_percent = float(line[1])
+                    if self.cv_percent > 1.0:
+                        self.cv_percent = self.cv_percent / 100.0
                 elif line[0].startswith('p_tech_apv3_pct'):
                     self.av_percent[0] = float(line[1])
+                    if self.av_percent[0] > 1.0:
+                        self.av_percent[0] = self.av_percent[0] / 100.0
                 elif line[0].startswith('p_tech_apv4_pct'):
                     self.av_percent[1] = float(line[1])
+                    if self.av_percent[1] > 1.0:
+                        self.av_percent[1] = self.av_percent[1] / 100.0
                 elif line[0].startswith('p_tech_apv5_pct'):
                     self.av_percent[2] = float(line[1])
+                    if self.av_percent[2] > 1.0:
+                        self.av_percent[2] = self.av_percent[2] / 100.0
                 else:
                     continue
 
