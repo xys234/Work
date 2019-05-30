@@ -320,6 +320,26 @@ class TripFileRecord:
     def stime(self, v):
         self.values[3] = v
 
+    @property
+    def upstream(self):
+        return self.values[1]
+
+    @upstream.setter
+    def upstream(self, v):
+        self.values[1] = v
+
+    @property
+    def downstream(self):
+        return self.values[2]
+
+    @downstream.setter
+    def downstream(self, v):
+        self.values[2] = v
+
+    @property
+    def dzone(self):
+        return self.values[-2]
+
 
 class File:
 
