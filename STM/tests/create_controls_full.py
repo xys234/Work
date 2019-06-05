@@ -234,7 +234,7 @@ if __name__ == '__main__':
 
             info = parse_matrix_table(m, t, vots)
             vtype = info['vtype']
-            occ = info['occ']
+            # occ = info['occ']
             purp = info['purp']
             vot = info['vot']
             time_period = info['time_period']
