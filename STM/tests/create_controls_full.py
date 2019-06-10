@@ -127,7 +127,7 @@ def parse_matrix_table(matrix_file_name, matrix_name, vots):
         time_period = '0..6, 19..24'
 
     for key in vots.keys():
-        if matrix_name.find(key) >= 0:
+        if matrix_name.lower().find(key) >= 0:
             vot = vots[key]
             break
 
@@ -194,7 +194,7 @@ if __name__ == '__main__':
         "nwi12da": 7.03, "nwi3da": 13.44, "nwi45da": 23.65,
         "nwi12a2": 12.3, "nwi3a2": 23.52, "nwi45a2": 41.39,
         "nwi12a3": 17.57, "nwi3a3": 33.6, "nwi45a3": 59.12,
-        "Cargo": 64.0, "Serv": 40.0, "taxi_exta": 18.94, "TNC": 18.94
+        "cargo": 64.0, "serv": 40.0, "taxi_exta": 18.94, "tnc": 18.94
     }
 
     # vots = {"hbwi1da": 9.6, "hbwi2da": 15.04, "hbwi3da": 20.48, "hbwi4da": 27.52, "hbwi5da": 37.12, "hbwi12a2": 21.56,
