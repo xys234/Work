@@ -217,8 +217,18 @@ def process_b03(trajectory_file, flat_trajectory_file):
 
 
 if __name__ == "__main__":
-    execution_dir = r'C:\Projects\SWIFT\SWIFT_Workspace\Scenarios\Scenario_S0\STM\STM_A\01_DynusT\03_Model'
-    input_trajectory_file = os.path.join(execution_dir, 'VehTrajectory.b03')
-    output_trajectory_file = os.path.join(execution_dir, 'Vehicle_Skim.csv')
+    import time
+    start_time = time.time()
+    # execution_dir = r'C:\Projects\SWIFT\SWIFT_Workspace\Scenarios\Scenario_S0\STM\STM_A\01_DynusT\03_Model'
+    execution_dir = r'L:\DCS\Projects\_Legacy\60563434_SWIFT\400_Technical\SWIFT_Workspace\Scenarios\Scenario_2045_S12_Alpha\STM\STM_A\01_DynusT\03_Model'
+    output_dir = r'C:\Projects\SWIFT\SWIFT_Workspace\Scenarios\Scenario_2045_S12_Alpha\STM\STM_A\01_DynusT\03_Model'
+    # input_trajectory_file = os.path.join(execution_dir, 'VehTrajectory.b03')
+    input_trajectory_file = os.path.join(execution_dir, 'VEHTRAJECTORY.ITF')
+    output_trajectory_file = os.path.join(output_dir, 'Vehicle_Skim.csv')
     # process_b03(input_trajectory_file, output_trajectory_file)
     process_itf(input_trajectory_file, output_trajectory_file)
+    end_time = time.time()
+    execution_time = (end_time-start_time) / 60.0
+    print('Process Completed in {.0f} minutes'.format(execution_time))
+
+
