@@ -25,6 +25,13 @@ FLAT_SKIM_HEADER = [f.strip() for f in
   "vid, tag, origz, destz, class, tck_hov, ustmn, downn, destn, stime, " \
   "travel_time, nodes, vehtype, evac, vot, tflag, parr, purp, gas, toll".split(',')]
 
+HEADER_TEMPLATE = \
+    "Veh #{0:9d} Tag={1:2d} OrigZ={2:5d} " \
+    "DestZ={3:5d} Class={4:2d} Tck/HOV={5:2d} UstmN={6:7d} " \
+    "DownN={7:7d} DestN={8:7d} STime={9:8.2f} Total Travel Time={10:8.2f} # of Nodes={11:4d} " \
+    "VehType{12:2d} EVAC{13:2d} VOT{14:8.2f} tFlag{15:2d} PrefArrTime{16:7.1f} " \
+    "TripPur{17:4d} IniGas{18:5.1f} " \
+    "Toll{19:6.1f}\n"
 
 def calc_read_size(numnodes, tag, toll, binary=True):
     if binary:
@@ -169,18 +176,45 @@ def process_itf(trajectory_file, flat_skim_file):
                     eof = True
                 if OK:
                     veh_count += 1
-                    vid, tag, numnodes, toll = data[0], data[1], data[11], data[19]
-                    nested_record_size, _ = calc_read_size(numnodes, tag, toll)
-                    _ = input_trajectories.read(nested_record_size)
+                    vid, tag, number_of_nodes, toll, header, nodes, cumu_times, times, delays, tolls = data
                     sys.stdout.write("\rNumber of Vehicle Trajectories Read = {:,d}".format(veh_count))
                     writer.writerow(data)
     sys.stdout.write("\n")
     print("Number of Vehicle Trajectories Read = {:,d}".format(veh_count))
 
 
+def filter_trajectories(trajectory_file, maxid, text_trajectory, binary_trajectory=None):
+    output_trajectory_binary = None
+    if binary_trajectory:
+        output_trajectory_binary = open(binary_trajectory, mode='wb', buffering=10_000_000)
+    with open(trajectory_file, mode='rb') as input_trajectory, \
+            open(text_trajectory, mode='w', newline='', buffering=10_000_000) as output_trajectory_text:
+                OK = 1
+                eof = False
+                veh_count = 0
+                while not eof:
+                    read_size = struct.calcsize(HEADER_PACKING_FMT)
+                    data = input_trajectory.read(read_size)
+                    if not data:
+                        eof = True
+                    else:
+                        try:
+                            data = parse_record(data)
+                        except struct.error:
+                            OK = 0
+                            eof = True
+                        if OK:
+                            veh_count += 1
+                            vid, tag, numnodes, toll = data[0], data[1], data[11], data[19]
+                            nested_record_size, _ = calc_read_size(numnodes, tag, toll)
+                            _ = input_trajectory.read(nested_record_size)
+                            sys.stdout.write("\rNumber of Vehicle Trajectories Read = {:,d}".format(veh_count))
+                            writer.writerow(data)
+
+    if binary_trajectory:
+        output_trajectory_binary.close()
+
 def process_b03(trajectory_file, flat_trajectory_file):
-    base_vmt = []
-    base_vid = []
 
     with open(trajectory_file, mode='rb') as input_trajectory, \
             open(flat_trajectory_file, mode='w', newline='', buffering=10_000_000) as output_trajectory:
