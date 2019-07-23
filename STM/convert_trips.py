@@ -224,7 +224,10 @@ class ConvertTrips(ExecutionService):
         self.logger.info("Processing trip table %s" % self.trip_table_file)
         self.logger.info("Processing matrix %s" % self.matrix_name)
 
-        od = h5['/data/' + self.matrix_name][:]
+        # Use the first key
+        group = list(h5.keys())[0]
+
+        od = h5['/'+group+'/' + self.matrix_name][:]
         total_trips = od.sum()
         self.logger.info("Total vehicles in the matrix                = {0:,.2f}".format(total_trips))
         od = bucket_rounding(od)
@@ -377,18 +380,18 @@ class ConvertTrips(ExecutionService):
 
 if __name__ == '__main__':
 
-    DEBUG = 0
+    DEBUG = 1
     if DEBUG == 1:
         import os
         # execution_path = r"C:\Projects\SWIFT\SWIFT_Project_Data\Controls"
         execution_path = r"L:\DCS\Projects\_Legacy\60563434_SWIFT\400_Technical\SWIFT_Workspace\CommonData\STM\STM_A\Control_Template"
         # execution_path = r"C:\Projects\SWIFT\SWIFT_Workspace\CommonData\STM\STM_A\Control_Template"
-        control_file = "ConvertTrips_WK_CAV_NonEV_AM.bin "
+        control_file = "ConvertTrips_WK_REG_EV_AM.ctl "
         control_file = os.path.join(execution_path, control_file)
         _environ = os.environ.copy()
         try:
             env = {
-                'SCEN_DIR': r'C:\Projects\SWIFT\SWIFT_Workspace\Scenarios\Scenario_S4_Full_DynusT',
+                'SCEN_DIR': r'L:\DCS\Projects\_Legacy\60563434_SWIFT\400_Technical\SWIFT_Workspace\Scenarios\S01_Existing',
             }
             os.environ.update(env)
             exe = ConvertTrips(input_control_file=control_file)
