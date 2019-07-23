@@ -11,9 +11,9 @@ import datetime
 
 # search_directory = r'I:\NVTA\Needs_Assess_Model\2016_Base_MID_Cap_v3'
 # search_directory = r'L:\DCS\Projects\_Legacy\60563434_SWIFT\400_Technical'
-search_directory = r'C:\Projects\SWIFT'
-search_extensions = ('xlsx', 'xls', 'xlsb')
-search_results = r'C:\Projects\spreadsheets_C_Drive.csv'
+search_directory = r'I:'
+search_extensions = ('zip', '7z')
+search_results = r'C:\Projects\compressed_archives_vdot.csv'
 
 matches = []
 
