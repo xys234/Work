@@ -334,13 +334,13 @@ class TripPrep(ExecutionService):
 
 
 if __name__ == '__main__':
-    DEBUG = 0
+    DEBUG = 1
     if DEBUG == 1:
         import os
         execution_path = r"C:\Projects\SWIFT\SWIFT_Project_Data\Controls"
         # execution_path = r"C:\Projects\SWIFT\SWIFT_Workspace\Scenarios\S04_Full\STM\STM_A\01_DynusT\01_Controls"
-        # control_file = "TripPrep_MergeTrips.ctl"
-        control_file = "TripPrep_toTabularTrips.ctl"
+        control_file = "TripPrep_MergeTrips.ctl"
+        # control_file = "TripPrep_toTabularTrips.ctl"
         control_file = os.path.join(execution_path, control_file)
         _environ = os.environ.copy()
         try:
@@ -349,7 +349,9 @@ if __name__ == '__main__':
             }
             os.environ.update(env)
             exe = TripPrep(input_control_file=control_file)
-            exe.execute()
+            state = exe.execute()
+            print('Program Exit State = ', state)
+            sys.exit(state)
         finally:
             os.environ = _environ
     else:
