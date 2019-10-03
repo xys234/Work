@@ -39,11 +39,19 @@ class Time:
         :return: Time
         """
 
+        if '@' in s:
+            parts = s.split('@')
+            day = int(parts[0])
+            s = parts[1]
+        else:
+            day = 0
+
         parts = s.split(':')
         if len(parts) == 2:
             self.hours, self.minutes = int(parts[0]), int(parts[1])
         else:
             self.hours, self.minutes, self.seconds = tuple([int(c) for c in parts])
+        self.hours += 24*day
 
     def __add__(self, other):
         """
@@ -168,16 +176,17 @@ def process_plans_csv(input_plans, output_trajectories):
                     nested = False
                     drive_legs = 0
                     legs_read = 0
+                    cumulative_distance = 0
 
             sys.stdout.write("\n")
             print("Total Number of Households Processed = {:d}".format(total_households))
 
 if __name__ == '__main__':
     import os
-    execution_dir = r'L:\DCS\Projects\_Legacy\60563434_SWIFT\400_Technical\SWIFT_Workspace\Scenarios\Scenario_2045_S12_Alpha\STM\STM_A\02_TrafficPredictor\03_Demand'
+    execution_dir = r'C:\Projects\TRANSIMS\Simulation'
     # plans = os.path.join(execution_dir, 'test.csv')
-    plans = os.path.join(execution_dir, 'FINAL_Plans_Link_53.csv')
-    output = os.path.join(execution_dir, 'test_Legs.csv')
+    plans = os.path.join(execution_dir, 'MESO_Plans_I66_Corridor.csv')
+    output = os.path.join(execution_dir, 'MESO_Plans_I66_Corridor_Legs.csv')
 
     process_plans_csv(plans, output)
 

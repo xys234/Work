@@ -32,48 +32,48 @@ def parse_matrix_table(matrix_file_name, matrix_name, vots):
     elif matrix_name.lower().find("s2") >= 0 or matrix_name.find("a2") >= 0:
         if matrix_name.lower().find("cav") >= 0:
             vtype = 6
-            occ = 1
+            occ = 2
             cav = True
         elif matrix_name.lower().find("reg") >= 0:
             vtype = 2
-            occ = 1
+            occ = 2
             cav = False
     elif matrix_name.lower().find("s3") >= 0 or matrix_name.find("a3") >= 0:
         if matrix_name.lower().find("cav") >= 0:
             vtype = 6
-            occ = 1
+            occ = 2
             cav = True
         elif matrix_name.lower().find("reg") >= 0:
             vtype = 2
-            occ = 1
+            occ = 2
             cav = False
     elif matrix_name.lower().find("cargo") >= 0:
         if matrix_name.lower().find("cav") >= 0:
             vtype = 8
-            occ = 2
+            occ = 1
             cav = True
         else:
             vtype = 4
-            occ = 2
+            occ = 1
             cav = False
     elif matrix_name.lower().find("serv") >= 0:
         if matrix_name.lower().find("cav") >= 0:
             vtype = 7
-            occ = 2
+            occ = 1
             cav = True
         else:
             vtype = 3
-            occ = 2
+            occ = 1
             cav = False
     elif matrix_name.lower().find("taxi") >= 0:
         vtype = 2
-        occ = 1
+        occ = 2
     elif matrix_name.lower().find("exta") >= 0:
         vtype = 2
         occ = 0
     elif matrix_name.lower().find("tnc") >= 0:
         vtype = 9
-        occ = 1
+        occ = 2
 
     if matrix_name.find("_w") >= 0:
         if matrix_file_name.lower().find("dynust nonev") >= 0:
@@ -172,7 +172,7 @@ if __name__ == '__main__':
     control_file_folder = r'C:\Projects\SWIFT\SWIFT_Project_Data\Controls'
 
     # matrix_folder = r'C:\Projects\SWIFT\SWIFT_Project_Data\Inputs\OD\2045'
-    matrix_folder = r'L:\DCS\Projects\_Legacy\60563434_SWIFT\400_Technical\SWIFT_Workspace\Scenarios\Scenario_S12\STM\STM_D\Outputs_SWIFT'
+    matrix_folder = r'L:\DCS\Projects\_Legacy\60563434_SWIFT\400_Technical\SWIFT_Workspace\Scenarios\Scenario_2045_S4_Alpha\STM\STM_D\Outputs_SWIFT'
     matrices_am = ["OD AM3HR Vehicles4DynusT EV", "OD AM3HR Vehicles4DynusT NonEV"]
     matrices_md = ["OD MD6HR Vehicles4DynusT EV", "OD MD6HR Vehicles4DynusT NonEV"]
     matrices_pm = ["OD PM4HR Vehicles4DynusT EV", "OD PM4HR Vehicles4DynusT NonEV"]
