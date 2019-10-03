@@ -39,7 +39,9 @@ def write_formatted_tolls(csv_toll_file, output_toll_file):
 
 if __name__ == '__main__':
     import os
-    project_dir = r"L:\DCS\Projects\_Legacy\60563434_SWIFT\400_Technical\Houston_8_County_DTA_CalibValid\_dst\HGAC_45_N2"
+    # project_dir = r"L:\DCS\Projects\_Legacy\60563434_SWIFT\400_Technical\Houston_8_County_DTA_CalibValid\_dst\HGAC_17_N1"
+    # project_dir = r"L:\DCS\Projects\_Legacy\60563434_SWIFT\400_Technical\Houston_8_County_DTA_CalibValid\_dst\HGAC_45_N2"
+    project_dir = r"L:\DCS\Projects\_Legacy\60563434_SWIFT\400_Technical\Houston_8_County_DTA_CalibValid\_dst\HGAC_45_N3"
     input_toll_file = os.path.join(project_dir, "toll.csv")
     output_toll_file = os.path.join(project_dir, "Toll.dat")
     write_formatted_tolls(input_toll_file, output_toll_file)

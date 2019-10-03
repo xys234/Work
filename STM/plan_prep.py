@@ -420,12 +420,15 @@ class PlanPrep(ExecutionService):
         with open(self.new_trajectory_file, mode='wb', buffering=super().OUTPUT_BUFFER) as output_trajectories:
             with open(self.input_trajectory_file, mode='rb') as input_trajectories:
                 for i, vid in enumerate(self.selections):
-                    pos, record_length, _ = self.vehicle_trajectory_index[vid]
-                    input_trajectories.seek(pos)
-                    record = input_trajectories.read(record_length)
-                    output_trajectories.write(record)
-                    self.count_paths_written += 1
-                    sys.stdout.write("\rNumber of Trajectories Written = {:,d}".format(i+1))
+                    if vid in self.vehicle_trajectory_index:
+                        pos, record_length, _ = self.vehicle_trajectory_index[vid]
+                        input_trajectories.seek(pos)
+                        record = input_trajectories.read(record_length)
+                        output_trajectories.write(record)
+                        self.count_paths_written += 1
+                        sys.stdout.write("\rNumber of Trajectories Written = {:,d}".format(i+1))
+                    else:
+                        self.logger.warning("Trip {:d} NOT Found in Input Trajectories".format(vid))
         sys.stdout.write("\n")
 
     def execute(self):
