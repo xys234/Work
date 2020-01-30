@@ -1,4 +1,3 @@
-import random
 
 from services.control_service import ControlService
 
@@ -14,10 +13,8 @@ class ExecutionService(ControlService):
         self.required_keys = required_keys
         self.optional_keys = optional_keys
         self.control_file = control_file
-        self.seed = None
 
     def execute(self):
         super().execute()
-        self.seed = self.keys['RANDOM_SEED'].value
 
 

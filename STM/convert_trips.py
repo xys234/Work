@@ -224,7 +224,10 @@ class ConvertTrips(ExecutionService):
         self.logger.info("Processing trip table %s" % self.trip_table_file)
         self.logger.info("Processing matrix %s" % self.matrix_name)
 
-        od = h5['/data/' + self.matrix_name][:]
+        # Use the first key
+        group = list(h5.keys())[0]
+
+        od = h5['/'+group+'/' + self.matrix_name][:]
         total_trips = od.sum()
         self.logger.info("Total vehicles in the matrix                = {0:,.2f}".format(total_trips))
         od = bucket_rounding(od)
@@ -307,6 +310,7 @@ class ConvertTrips(ExecutionService):
         for i, vals in enumerate(vehicle_pool):
             trip = TripFileRecord()
             trip.update((len(self.vehicles)+1, ) + vals)
+            trip.stime = trip.stime * 60.0
             self.vehicles.append(trip)
             num_vehicles += 1
         self.logger.info("Vehicles converted                          = {0:,d}".format(num_vehicles))
@@ -345,9 +349,9 @@ class ConvertTrips(ExecutionService):
 
         """
         super().execute()
-        start_time = time.time()
 
         if self.state == State.OK:
+            start_time = time.time()
             for i in range(self.highest_group):
                 if self.state == State.OK:
                     matrix_conversion_start_time = time.time()
@@ -362,34 +366,32 @@ class ConvertTrips(ExecutionService):
             else:
                 self.write_vehicles()
 
-        end_time = time.time()
-        execution_time = (end_time-start_time)/60.0
+            end_time = time.time()
+            execution_time = (end_time-start_time)/60.0
 
-        self.logger.info("")
-        self.logger.info("")
-        if self.state == State.ERROR:
-            self.logger.info("Execution completed with ERROR in %.2f minutes" % execution_time)
-        else:
-            self.logger.info("Execution completed in %.2f minutes" % execution_time)
+            self.logger.info("")
+            self.logger.info("")
+            if self.state == State.ERROR:
+                self.logger.info("Execution completed with ERROR in %.2f minutes" % execution_time)
+            else:
+                self.logger.info("Execution completed in %.2f minutes" % execution_time)
         return self.state.value
 
 
 if __name__ == '__main__':
 
-    DEBUG = 0
+    DEBUG = 1
     if DEBUG == 1:
         import os
-        execution_path = r"C:\Projects\SWIFT\SWIFT_Project_Data\Controls"
-        # execution_path = r"L:\DCS\Projects\_Legacy\60563434_SWIFT\400_Technical\SWIFT_Workspace\CommonData\STM\STM_A\Control_Template"
+        # execution_path = r"C:\Projects\SWIFT\SWIFT_Project_Data\Controls"
+        execution_path = r"L:\DCS\Projects\_Legacy\60563434_SWIFT\400_Technical\SWIFT_Workspace\CommonData\STM\STM_A\Control_Template"
         # execution_path = r"C:\Projects\SWIFT\SWIFT_Workspace\CommonData\STM\STM_A\Control_Template"
-        # control_file = "ConvertTrips_HBW_AM.ctl"
-        # control_file = "ConvertTrips_OTHER_AM.ctl"
-        control_file = "ConvertTrips_OTHER_MD.ctl"
+        control_file = "ConvertTrips_WK_REG_EV_AM.ctl "
         control_file = os.path.join(execution_path, control_file)
         _environ = os.environ.copy()
         try:
             env = {
-                'SCEN_DIR': r'C:\Projects\SWIFT\SWIFT_Workspace\Scenarios\Scenario_S4_Full',
+                'SCEN_DIR': r'L:\DCS\Projects\_Legacy\60563434_SWIFT\400_Technical\SWIFT_Workspace\Scenarios\S01_Existing',
             }
             os.environ.update(env)
             exe = ConvertTrips(input_control_file=control_file)

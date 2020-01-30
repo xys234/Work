@@ -38,6 +38,7 @@ class ControlService(object):
         self.project_dir = None
         self.report_file = None
         self.logger = None
+        self.seed = 42
 
     @staticmethod
     def is_comment(line):
@@ -104,6 +105,7 @@ class ControlService(object):
         return ''.join(output)
 
     def read_control(self, control_file):
+        control_file = control_file.strip()
         if self.state == State.ERROR:
             return self.state
         elif not os.path.exists(control_file):
@@ -316,7 +318,7 @@ class ControlService(object):
         if self.state == State.ERROR:
             return self.state
 
-        acceptable_keys = self.required_keys + self.optional_keys
+        acceptable_keys = self.common_keys + self.required_keys + self.optional_keys
         single_keys = [k for k in acceptable_keys if KEYS_DATABASE[k].group == KeyGroupTypes.SINGLE]
         group_suffixes = ["_"+str(g) for g in range(1, self.highest_group+1)]
         group_keys = [k for k in acceptable_keys if KEYS_DATABASE[k].group == KeyGroupTypes.GROUP]
@@ -413,14 +415,14 @@ if __name__ == '__main__':
 
         # execution_path = r"C:\Projects\Repo\Work\STM\tests\Controls"
         execution_path = r"L:\DCS\Projects\_Legacy\60563434_SWIFT\400_Technical\SWIFT_Workspace\CommonData\STM\STM_A\Control_Template"
-        control_file = "ConvertTrips_OTHER_AM.ctl"
+        control_file = "ConvertTrips_WK_CAV_NonEV_AM.bin "
         control_file = os.path.join(execution_path, control_file)
 
         _environ = os.environ.copy()
         try:
             env = {
-                'SCEN_DIR': r'L:\DCS\Projects\_Legacy\60563434_SWIFT\400_Technical\SWIFT_Workspace\Scenarios\Scenario_S4_Full',
-                'SCEN': 'S04_Full',
+                'SCEN_DIR': r'L:\DCS\Projects\_Legacy\60563434_SWIFT\400_Technical\SWIFT_Workspace\Scenarios\Scenario_S4_Full_DynusT',
+                'SCEN': 'S04_Full_DynusT',
                 'PURPOSE': 'OTHER_AM'
             }
             os.environ.update(env)
