@@ -7,6 +7,11 @@ import matplotlib.pyplot as plt
 
 from matplotlib.dates import num2date
 from matplotlib.ticker import FuncFormatter
+from pandas.plotting import register_matplotlib_converters
+
+
+# Register converter for matplotlib plotting methods to disable future warnings
+register_matplotlib_converters()
 
 
 # Create data
